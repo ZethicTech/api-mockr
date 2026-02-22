@@ -1,0 +1,39 @@
+{
+  "name": "mockr",
+  "version": "0.1.0",
+  "description": "Lightweight local mock API server",
+  "license": "MIT",
+  "bin": {
+    "mockr": "./dist/cli/index.js"
+  },
+  "main": "./dist/index.js",
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "npm run build:server && npm run build:ui",
+    "build:server": "tsc -p tsconfig.json",
+    "build:ui": "vite build --config ui/vite.config.ts",
+    "dev": "tsc -p tsconfig.json --watch",
+    "start": "node dist/cli/index.js",
+    "test": "node --test test/"
+  },
+  "dependencies": {
+    "@hono/node-server": "^2.1.1",
+    "ajv": "^8.17.1",
+    "chokidar": "^4.0.3",
+    "hono": "^4.13.3"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "^2.10.6",
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "^22.13.5",
+    "preact": "^10.29.8",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.7.3",
+    "vite": "^6.2.0"
+  }
+}
