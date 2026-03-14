@@ -17,6 +17,7 @@ export interface PipelineOutcome {
   body?: unknown;
   /** For the request log. */
   via: string;
+  /** Only set for genuine faults — never for a deliberate err.status. */
   error?: Error;
 }
 
@@ -118,12 +119,17 @@ export class Pipeline {
     const body =
       shape.body !== undefined ? shape.body : { ...extra, error: extra.error ?? shape.message, message: shape.message };
 
+    // User code that sets err.status is expressing an intended outcome (a 401,
+    // a 400 rejection). That is not a fault, so it gets no stack trace — the
+    // request log line already records it. Only surprises are worth a stack.
+    const deliberate = shape.status !== undefined;
+
     return {
       status: shape.status ?? defaultStatus,
       headers: {},
       body,
       via,
-      error: err instanceof Error ? err : new Error(shape.message),
+      error: deliberate ? undefined : err instanceof Error ? err : new Error(shape.message),
     };
   }
 }
