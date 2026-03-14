@@ -19,7 +19,7 @@
     "build:ui": "vite build --config ui/vite.config.ts",
     "dev": "tsc -p tsconfig.json --watch",
     "start": "node dist/cli/index.js",
-    "test": "node --test test/"
+    "test": "npm run build:server && node --test test/*.test.js"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.1",
