@@ -15,12 +15,16 @@ export interface WatcherOptions {
 /**
  * Watches mockr.json, handlers/ and interceptors/.
  *
- * Three hazards handled here:
+ * Resolves once chokidar has finished its initial scan. Startup must not
+ * complete before then: with ignoreInitial set, any edit landing during the
+ * scan is swallowed, so an early change would be silently ignored.
+ *
+ * Four hazards handled here:
  *  - partial writes  -> awaitWriteFinish, so we never parse a truncated file
  *  - burst saves     -> debounce, so a multi-file save is one reload
  *  - our own writes  -> content-hash check, so the admin API does not loop
  */
-export function createWatcher(opts: WatcherOptions): FSWatcher {
+export function createWatcher(opts: WatcherOptions): Promise<FSWatcher> {
   const { paths, store, logger } = opts;
   const debounceMs = opts.debounceMs ?? 100;
 
@@ -66,5 +70,8 @@ export function createWatcher(opts: WatcherOptions): FSWatcher {
   watcher.on('unlink', schedule);
   watcher.on('error', (err) => logger.error('watcher error', err as Error));
 
-  return watcher;
+  return new Promise((resolve, reject) => {
+    watcher.once('ready', () => resolve(watcher));
+    watcher.once('error', reject);
+  });
 }

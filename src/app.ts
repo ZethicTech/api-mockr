@@ -82,7 +82,7 @@ export async function start(opts: StartOptions): Promise<RunningMockr> {
 
   let watcher: FSWatcher | null = null;
   if (opts.watch !== false) {
-    watcher = createWatcher({ paths, store, logger, onReload: reload });
+    watcher = await createWatcher({ paths, store, logger, onReload: reload });
   }
 
   const mockPort = portOf(mockServer, opts.port);
