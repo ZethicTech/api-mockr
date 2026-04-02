@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { ProjectPaths } from './util/paths';
+import { ProjectPaths, isEsmProject, scaffoldExtension } from './util/paths';
 
 const EXAMPLE_CONFIG = `{
   "routes": [
@@ -79,11 +79,14 @@ module.exports = async function (ctx) {
 
 export interface ScaffoldResult {
   created: string[];
+  /** True when handlers were written as .cjs because the project is ESM. */
+  esm: boolean;
 }
 
 /** Idempotent: existing files are never overwritten. */
 export function scaffold(paths: ProjectPaths): ScaffoldResult {
   const created: string[] = [];
+  const ext = scaffoldExtension(paths.dir);
 
   fs.mkdirSync(paths.dir, { recursive: true });
 
@@ -94,10 +97,12 @@ export function scaffold(paths: ProjectPaths): ScaffoldResult {
     }
   }
 
+  // In a project with "type": "module" a .js file is ESM, so a CommonJS
+  // handler in one cannot load. Scaffold .cjs there instead.
   const files: Array<[string, string]> = [
     [paths.configFile, EXAMPLE_CONFIG],
-    [path.join(paths.handlersDir, 'login.js'), EXAMPLE_HANDLER],
-    [path.join(paths.interceptorsDir, 'requireAuth.js'), EXAMPLE_INTERCEPTOR],
+    [path.join(paths.handlersDir, `login${ext}`), EXAMPLE_HANDLER],
+    [path.join(paths.interceptorsDir, `requireAuth${ext}`), EXAMPLE_INTERCEPTOR],
   ];
 
   for (const [file, content] of files) {
@@ -107,5 +112,5 @@ export function scaffold(paths: ProjectPaths): ScaffoldResult {
     }
   }
 
-  return { created };
+  return { created, esm: isEsmProject(paths.dir) };
 }

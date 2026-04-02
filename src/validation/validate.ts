@@ -1,9 +1,8 @@
-import fs from 'node:fs';
 import Ajv, { ErrorObject } from 'ajv';
 import { MockRoute, MockrConfig } from '../types';
 import { configSchema } from './schema';
 import { normalizeMethod, normalizePath } from '../matcher/normalize';
-import { ProjectPaths, resolveModulePath } from '../util/paths';
+import { ProjectPaths, findModuleFile, moduleCandidates } from '../util/paths';
 
 const ajv = new Ajv({ allErrors: true, strict: false });
 const validateConfigSchema = ajv.compile(configSchema);
@@ -91,15 +90,16 @@ function checkModule(
   name: string,
   checkFiles: boolean | undefined,
 ): void {
-  let resolved: string;
+  let found: string | null;
   try {
-    resolved = resolveModulePath(baseDir, name);
+    found = findModuleFile(baseDir, name);
   } catch (err) {
     issues.push({ path: at, message: `${label} ${(err as Error).message}` });
     return;
   }
-  if (checkFiles && !fs.existsSync(resolved)) {
-    issues.push({ path: at, message: `${label} "${name}" not found (expected ${resolved})` });
+  if (checkFiles && !found) {
+    const tried = moduleCandidates(baseDir, name).join(' or ');
+    issues.push({ path: at, message: `${label} "${name}" not found (expected ${tried})` });
   }
 }
 

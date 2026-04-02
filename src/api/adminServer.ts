@@ -7,7 +7,7 @@ import { MemoryRouteRegistry } from '../registry/MemoryRouteRegistry';
 import { JsonFileStore, generateRouteId } from '../storage/JsonFileStore';
 import { validateConfig } from '../validation/validate';
 import { MockRoute } from '../types';
-import { ProjectPaths } from '../util/paths';
+import { MODULE_EXTENSIONS, ProjectPaths } from '../util/paths';
 import { Logger } from '../util/logger';
 
 export interface AdminServerOptions {
@@ -146,9 +146,13 @@ async function persist(opts: AdminServerOptions, routes: MockRoute[]): Promise<v
 
 function listModules(dir: string): string[] {
   if (!fs.existsSync(dir)) return [];
-  return fs
-    .readdirSync(dir)
-    .filter((f) => f.endsWith('.js') && !f.startsWith('.'))
-    .map((f) => f.slice(0, -3))
-    .sort();
+
+  const names = new Set<string>();
+  for (const file of fs.readdirSync(dir)) {
+    if (file.startsWith('.')) continue;
+    const ext = MODULE_EXTENSIONS.find((e) => file.endsWith(e));
+    if (ext) names.add(file.slice(0, -ext.length));
+  }
+
+  return [...names].sort();
 }

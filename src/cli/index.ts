@@ -31,12 +31,13 @@ async function main(): Promise<void> {
 
   if (opts.command === 'init') {
     const paths = projectPaths(opts.dir);
-    const { created } = scaffold(paths);
+    const { created, esm } = scaffold(paths);
     if (created.length === 0) {
       console.log('Nothing to do — this project is already set up.');
     } else {
       console.log(`Created a Mockr project in ${paths.dir}`);
       for (const file of created) console.log(`  + ${file}`);
+      if (esm) console.log('\nThis project is ESM ("type": "module"), so handlers use .cjs');
       console.log('\nNext:  mockr');
     }
     return;

@@ -40,9 +40,13 @@ export async function start(opts: StartOptions): Promise<RunningMockr> {
 
   const store = new JsonFileStore(paths);
   if (!store.exists()) {
-    const { created } = scaffold(paths);
+    const { created, esm } = scaffold(paths);
     logger.info(`Created a new Mockr project in ${paths.dir}`);
     for (const file of created) logger.info(`  + ${file}`);
+    if (esm) {
+      logger.info('');
+      logger.info('  This project is ESM ("type": "module"), so handlers use .cjs');
+    }
     logger.info('');
   }
 

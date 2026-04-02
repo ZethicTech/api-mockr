@@ -1,7 +1,6 @@
-import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import { ModuleLoadError } from '../errors';
-import { resolveModulePath } from '../util/paths';
+import { findModuleFile, moduleCandidates, resolveModuleBase } from '../util/paths';
 
 const requireUser = createRequire(__filename);
 
@@ -25,15 +24,16 @@ export abstract class ModuleLoader<T> {
     const cached = this.cache.get(name);
     if (cached) return cached;
 
-    let resolved: string;
+    let resolved: string | null;
     try {
-      resolved = resolveModulePath(this.baseDir, name);
+      resolved = findModuleFile(this.baseDir, name);
     } catch (err) {
       throw new ModuleLoadError(this.kind, name, err as Error);
     }
 
-    if (!fs.existsSync(resolved)) {
-      throw new ModuleLoadError(this.kind, name, new Error(`file not found: ${resolved}`));
+    if (!resolved) {
+      const tried = moduleCandidates(this.baseDir, name).join(' or ');
+      throw new ModuleLoadError(this.kind, name, new Error(`file not found: ${tried}`));
     }
 
     let exported: unknown;
@@ -41,7 +41,7 @@ export abstract class ModuleLoader<T> {
       delete requireUser.cache[requireUser.resolve(resolved)];
       exported = requireUser(resolved);
     } catch (err) {
-      throw new ModuleLoadError(this.kind, name, err as Error);
+      throw new ModuleLoadError(this.kind, name, explainLoadFailure(err as Error, resolved));
     }
 
     // Tolerate `export default` output from bundlers alongside plain CJS.
@@ -69,8 +69,9 @@ export abstract class ModuleLoader<T> {
   invalidate(name: string): void {
     this.cache.delete(name);
     try {
-      const resolved = resolveModulePath(this.baseDir, name);
-      delete requireUser.cache[requireUser.resolve(resolved)];
+      for (const candidate of moduleCandidates(this.baseDir, name)) {
+        delete requireUser.cache[candidate];
+      }
     } catch {
       // Unresolvable names were never cached by require in the first place.
     }
@@ -84,4 +85,29 @@ export abstract class ModuleLoader<T> {
   has(name: string): boolean {
     return this.cache.has(name);
   }
+
+  /** Where this module would live, for error messages. */
+  protected basePath(name: string): string {
+    return resolveModuleBase(this.baseDir, name);
+  }
+}
+
+/**
+ * A .js file in a project with "type": "module" is ESM, so a CommonJS module
+ * body fails with a message that does not mention Mockr at all. Point at the
+ * fix instead of passing Node's wording through untouched.
+ */
+function explainLoadFailure(err: Error, file: string): Error {
+  const esm =
+    /module is not defined in ES module scope|Cannot use import statement|require\(\) of ES Module/.test(
+      err.message,
+    );
+
+  if (!esm) return err;
+
+  const renamed = file.replace(/\.js$/, '.cjs');
+  return new Error(
+    `${err.message.split('\n')[0]} — this project is ESM. Rename it to ${renamed.split('/').pop()}, ` +
+      `which Mockr loads the same way, or use module.exports in a .cjs file.`,
+  );
 }
