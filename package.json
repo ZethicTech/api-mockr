@@ -1,7 +1,7 @@
 {
-  "name": "mockr",
+  "name": "mockrjs",
   "version": "0.1.0",
-  "description": "Lightweight local mock API server",
+  "description": "Lightweight local mock API server with a web UI, JavaScript handlers and hot reload",
   "license": "MIT",
   "bin": {
     "mockr": "./dist/cli/index.js"
@@ -19,7 +19,8 @@
     "build:ui": "vite build --config ui/vite.config.ts",
     "dev": "tsc -p tsconfig.json --watch",
     "start": "node dist/cli/index.js",
-    "test": "npm run build:server && node --test test/*.test.js"
+    "test": "npm run build:server && node --test test/*.test.js",
+    "prepublishOnly": "npm run build && npm test"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.1",
@@ -35,5 +36,23 @@
     "tailwindcss": "^4.3.3",
     "typescript": "^5.7.3",
     "vite": "^6.2.0"
+  },
+  "keywords": [
+    "mock",
+    "mock-server",
+    "mock-api",
+    "api",
+    "rest",
+    "testing",
+    "development",
+    "hot-reload"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/arpan-zethic/mockrjs.git"
+  },
+  "homepage": "https://github.com/arpan-zethic/mockrjs#readme",
+  "bugs": {
+    "url": "https://github.com/arpan-zethic/mockrjs/issues"
   }
 }
