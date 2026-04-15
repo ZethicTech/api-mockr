@@ -210,6 +210,61 @@ test('a handler with a syntax error is reported without taking the server down',
   });
 });
 
+test('a handler written through the API is live on the next request', async () => {
+  await withServer(async ({ mock, admin, json }) => {
+    const created = await admin('/api/handlers/greet', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ source: 'module.exports = () => ({ status: 200, body: { hi: true } });' }),
+    });
+    assert.equal(created.status, 200);
+    assert.deepEqual((await json('/api/handlers')).handlers.includes('greet'), true);
+
+    await admin('/api/routes', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ method: 'GET', path: '/greet', handler: 'greet' }),
+    });
+    assert.deepEqual(await (await mock('/greet')).json(), { hi: true });
+
+    // Editing the source takes effect without a restart.
+    await admin('/api/handlers/greet', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ source: 'module.exports = () => ({ status: 201, body: { edited: true } });' }),
+    });
+    const edited = await mock('/greet');
+    assert.equal(edited.status, 201);
+    assert.deepEqual(await edited.json(), { edited: true });
+  });
+});
+
+test('code that does not parse is rejected without disturbing the running route', async () => {
+  await withServer(async ({ mock, admin }) => {
+    const res = await admin('/api/handlers/byId', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ source: 'module.exports = (' }),
+    });
+    assert.equal(res.status, 422);
+    assert.match((await res.json()).error, /syntax error/);
+
+    // The previous version is untouched and still serving.
+    assert.deepEqual(await (await mock('/users/9')).json(), { id: '9' });
+  });
+});
+
+test('module sources cannot be written outside their directory', async () => {
+  await withServer(async ({ admin }) => {
+    const res = await admin(`/api/handlers/${encodeURIComponent('../../evil')}`, {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ source: '1;' }),
+    });
+    assert.equal(res.status, 400);
+  });
+});
+
 test('an admin write does not trigger a reload loop', async () => {
   await withServer(async ({ admin, json }) => {
     const before = (await json('/api/status')).loadedAt;

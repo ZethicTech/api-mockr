@@ -8,6 +8,12 @@ import { JsonFileStore, generateRouteId } from '../storage/JsonFileStore';
 import { validateConfig } from '../validation/validate';
 import { MockRoute } from '../types';
 import { MODULE_EXTENSIONS, ProjectPaths } from '../util/paths';
+import {
+  InvalidModuleName,
+  ModuleFileStore,
+  ModuleKind,
+  ModuleSyntaxError,
+} from '../storage/ModuleFileStore';
 import { Logger } from '../util/logger';
 
 export interface AdminServerOptions {
@@ -37,6 +43,50 @@ export function createAdminServer(opts: AdminServerOptions): Hono {
   // ── Discovery ─────────────────────────────────────────────────────────────
   app.get('/api/handlers', (c) => c.json({ handlers: listModules(paths.handlersDir) }));
   app.get('/api/interceptors', (c) => c.json({ interceptors: listModules(paths.interceptorsDir) }));
+
+  // ── Module sources ────────────────────────────────────────────────────────
+  // Handlers and interceptors are editable from the UI. Any dependency they
+  // require must be installed in the user's own project.
+  const stores: Record<ModuleKind, ModuleFileStore> = {
+    handlers: new ModuleFileStore(paths.dir, paths.handlersDir),
+    interceptors: new ModuleFileStore(paths.dir, paths.interceptorsDir),
+  };
+
+  const storeFor = (kind: string): ModuleFileStore | null =>
+    kind === 'handlers' || kind === 'interceptors' ? stores[kind] : null;
+
+  app.get('/api/:kind{handlers|interceptors}/:name', async (c) => {
+    const store = storeFor(c.req.param('kind'))!;
+    return withModuleErrors(c, async () => {
+      const found = await store.read(c.req.param('name'));
+      return found ? c.json(found) : c.json({ error: 'module not found' }, 404);
+    });
+  });
+
+  app.put('/api/:kind{handlers|interceptors}/:name', async (c) => {
+    const store = storeFor(c.req.param('kind'))!;
+    const input = (await safeJson(c)) as { source?: unknown } | undefined;
+
+    if (!input || typeof input.source !== 'string') {
+      return c.json({ error: 'expected a JSON body with a "source" string' }, 400);
+    }
+
+    return withModuleErrors(c, async () => {
+      const written = await store.write(c.req.param('name'), input.source as string);
+      await opts.reload();
+      return c.json(written);
+    });
+  });
+
+  app.delete('/api/:kind{handlers|interceptors}/:name', async (c) => {
+    const store = storeFor(c.req.param('kind'))!;
+    return withModuleErrors(c, async () => {
+      const removed = await store.remove(c.req.param('name'));
+      if (!removed) return c.json({ error: 'module not found' }, 404);
+      await opts.reload();
+      return c.body(null, 204);
+    });
+  });
 
   // ── Routes ────────────────────────────────────────────────────────────────
   app.get('/api/routes', async (c) => {
@@ -113,6 +163,22 @@ export function createAdminServer(opts: AdminServerOptions): Hono {
   }
 
   return app;
+}
+
+/** Map the store's typed failures onto status codes. */
+async function withModuleErrors(
+  c: { json: (body: unknown, status: 400 | 422) => Response },
+  run: () => Promise<Response>,
+): Promise<Response> {
+  try {
+    return await run();
+  } catch (err) {
+    if (err instanceof InvalidModuleName) return c.json({ error: err.message }, 400);
+    if (err instanceof ModuleSyntaxError) {
+      return c.json({ error: 'the code has a syntax error', message: err.message }, 422);
+    }
+    throw err;
+  }
 }
 
 async function readRoutes(store: JsonFileStore, registry: MemoryRouteRegistry): Promise<MockRoute[]> {
