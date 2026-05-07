@@ -20,7 +20,8 @@
     "dev": "tsc -p tsconfig.json --watch",
     "start": "node dist/cli/index.js",
     "test": "npm run build:server && node --test test/*.test.js",
-    "prepublishOnly": "npm run build && npm test"
+    "prepublishOnly": "npm run build && npm test",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p ui/tsconfig.json"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.1",

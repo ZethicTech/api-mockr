@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'preact/hooks';
-import { api, ApiError } from './api';
+import { api, ApiError, ModuleKind } from './api';
 import type { MockRoute, Status, ValidationIssue } from './types';
 import { RouteList } from './components/RouteList';
 import { Draft, RouteEditor, draftToRoute, emptyDraft, toDraft } from './components/RouteEditor';
 import { StatusDot, WarnIcon } from './components/primitives';
+import { CodeView } from './components/CodeView';
 
 const NEW_ROUTE = '__new__';
 const POLL_MS = 2000;
@@ -20,6 +21,9 @@ export function App() {
   const [error, setError] = useState<string | null>(null);
   const [issues, setIssues] = useState<ValidationIssue[]>([]);
   const [booted, setBooted] = useState(false);
+
+  const [view, setView] = useState<'routes' | 'code'>('routes');
+  const [openFile, setOpenFile] = useState<{ kind: ModuleKind; name: string } | null>(null);
 
   const selected = routes.find((r) => r.id === selectedId) ?? null;
   const isNew = selectedId === NEW_ROUTE;
@@ -110,6 +114,12 @@ export function App() {
     return JSON.stringify(draft) !== JSON.stringify(toDraft(selected));
   }, [draft, selected, isNew]);
 
+  /** Jump from a route straight to the file it points at. */
+  const editModule = (kind: ModuleKind, name: string) => {
+    setOpenFile(name ? { kind, name } : null);
+    setView('code');
+  };
+
   const save = async () => {
     if (!draft) return;
     const built = draftToRoute(draft);
@@ -184,6 +194,23 @@ export function App() {
         {status === null && booted && (
           <span class="text-xs text-[var(--color-danger)]">server unreachable</span>
         )}
+
+        <nav class="flex gap-1 rounded-md border border-[var(--color-border)] p-0.5 text-xs">
+          {(['routes', 'code'] as const).map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setView(tab)}
+              class={`rounded px-2.5 py-1 capitalize transition-colors ${
+                view === tab
+                  ? 'bg-[var(--color-surface-hover)] text-[var(--color-fg)]'
+                  : 'text-[var(--color-muted)] hover:text-[var(--color-fg)]'
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
+        </nav>
       </header>
 
       {status && status.errors.length > 0 && (
@@ -205,6 +232,14 @@ export function App() {
         </div>
       )}
 
+      {view === 'code' ? (
+        <CodeView
+          handlers={handlers}
+          interceptors={interceptors}
+          initial={openFile}
+          onChanged={refresh}
+        />
+      ) : (
       <main class="flex min-h-0 flex-1">
         <RouteList
           routes={routes}
@@ -227,6 +262,7 @@ export function App() {
             onChange={setDraft}
             onSave={save}
             onDelete={remove}
+            onEditModule={editModule}
           />
         ) : (
           <section class="flex flex-1 items-center justify-center text-sm text-[var(--color-muted)]">
@@ -234,6 +270,7 @@ export function App() {
           </section>
         )}
       </main>
+      )}
     </div>
   );
 }

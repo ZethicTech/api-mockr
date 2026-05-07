@@ -97,6 +97,8 @@ export function draftToRoute(draft: Draft): { route: Omit<MockRoute, 'id'> } | {
   };
 }
 
+export type EditModule = (kind: 'handlers' | 'interceptors', name: string) => void;
+
 interface Props {
   draft: Draft;
   isNew: boolean;
@@ -109,6 +111,7 @@ interface Props {
   onChange: (draft: Draft) => void;
   onSave: () => void;
   onDelete: () => void;
+  onEditModule: EditModule;
 }
 
 export function RouteEditor(props: Props) {
@@ -218,20 +221,38 @@ export function RouteEditor(props: Props) {
 
         {draft.mode === 'handler' ? (
           <div>
-            <Label hint="a file in handlers/">Handler</Label>
+            <div class="flex items-baseline justify-between">
+              <Label hint="a file in handlers/">Handler</Label>
+              {draft.handler && (
+                <button
+                  type="button"
+                  onClick={() => props.onEditModule('handlers', draft.handler)}
+                  class="mb-1.5 text-xs text-[var(--color-muted)] hover:text-[var(--color-fg)]"
+                >
+                  Edit code →
+                </button>
+              )}
+            </div>
             {handlers.length > 0 ? (
               <Select value={draft.handler} onChange={(e) => set('handler', (e.target as HTMLSelectElement).value)}>
                 <option value="">Select a handler…</option>
                 {handlers.map((name) => (
                   <option key={name} value={name}>
-                    {name}.js
+                    {name}
                   </option>
                 ))}
               </Select>
             ) : (
               <p class="text-xs text-[var(--color-muted)]">
-                No handlers found. Add a <code class="font-mono">.js</code> file to{' '}
-                <code class="font-mono">handlers/</code> and it appears here.
+                No handlers yet — create one in the{' '}
+                <button
+                  type="button"
+                  onClick={() => props.onEditModule('handlers', '')}
+                  class="underline hover:text-[var(--color-fg)]"
+                >
+                  Code tab
+                </button>
+                .
               </p>
             )}
           </div>
