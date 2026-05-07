@@ -5,7 +5,7 @@ JavaScript. No database, no account, no cloud.
 
 ```bash
 cd your-project
-npx mockr
+npx mockrjs
 ```
 
 That scaffolds a project, starts a mock server on `:4000` and opens a UI on
@@ -43,6 +43,7 @@ Add it to your dev scripts so it comes up with everything else:
 
 ```json
 {
+  "devDependencies": { "mockrjs": "^0.1.0" },
   "scripts": {
     "mock": "mockr",
     "dev": "npm run mock & vite"
@@ -50,7 +51,9 @@ Add it to your dev scripts so it comes up with everything else:
 }
 ```
 
-Or run it on demand with `npx mockr`. No install required.
+Or run it on demand with `npx mockrjs`. No install required.
+
+> The package is `mockrjs`; the command it installs is `mockr`.
 
 ### 2. Point your app at it
 
@@ -148,6 +151,9 @@ timeout or the 500 that is awkward to trigger against a real backend.
 
 ## Handlers
 
+Write these in the UI's **Code** tab, or in your own editor — both hot reload,
+and the UI picks up external edits within two seconds.
+
 When the response depends on the request, point the route at a file instead
 of a body:
 
@@ -175,6 +181,31 @@ module.exports = async function (ctx) {
 ```
 
 A route has either a `response` or a `handler`, never both.
+
+In the UI, choosing **JavaScript handler** on a route gives you a dropdown of
+what exists and an **Edit code →** link into the editor. New files start from
+a template. Code that does not parse is refused on save, so a typo can never
+replace a handler that was working.
+
+### Dependencies
+
+Handlers and interceptors are ordinary Node modules, so they can require
+anything installed **in your project**:
+
+```bash
+npm install crypto-js
+```
+
+```js
+const CryptoJS = require('crypto-js');
+
+module.exports = async function (ctx) {
+  return { body: { signed: CryptoJS.SHA256(ctx.request.body.data).toString() } };
+};
+```
+
+Mockr does not install anything on your behalf, and nothing is bundled — if a
+require fails, install the package in your own project.
 
 ### What a handler receives
 
@@ -213,8 +244,8 @@ printed to the terminal.
 
 ## Interceptors
 
-Interceptors run around the response and are attached per route, so one
-implementation can serve many endpoints:
+Interceptors are written the same way — the Code tab, or your editor — and are
+attached per route, so one implementation can serve many endpoints:
 
 ```json
 {
@@ -380,7 +411,17 @@ DELETE /api/routes/:id
 GET    /api/handlers          names available to route at
 GET    /api/interceptors
 GET    /api/status            route count, load errors
+
+GET    /api/handlers/:name    read source
+PUT    /api/handlers/:name    write source  { "source": "..." }
+DELETE /api/handlers/:name
+GET    /api/interceptors/:name
+PUT    /api/interceptors/:name
+DELETE /api/interceptors/:name
 ```
+
+Module writes are parsed before they are saved and rejected with `422` if they
+do not compile, so the running server keeps the last working version.
 
 Writes are validated before they touch the file, and rejected ones come back
 as `422` listing every problem at once.
@@ -410,6 +451,9 @@ do it on a network you trust.
 
 No regex or wildcard routes, request recording, response scenarios, OpenAPI
 import, GraphQL, WebSockets, auth, multi-user, or a database.
+
+It does not manage your dependencies. Handlers can require anything in your
+project's `node_modules`, but installing them is yours to do.
 
 There is also **no passthrough proxy**: a request that matches no route is a
 `404`, not a forwarded call to a real backend. If only part of your API is

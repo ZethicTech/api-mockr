@@ -1064,10 +1064,40 @@ GET    /api/status
 The UI polls this every 2 seconds to detect out-of-band file edits and to
 surface load errors. WebSockets remain a non-goal.
 
-## Not in MVP
+## Module sources
 
-Editing handler or interceptor `.js` files through the UI. Users edit
-those in their own editor; hot reload picks the change up.
+Handlers and interceptors are editable through the API, and therefore
+from the UI.
+
+```http
+GET    /api/handlers/:name
+PUT    /api/handlers/:name        { "source": "..." }
+DELETE /api/handlers/:name
+
+GET    /api/interceptors/:name
+PUT    /api/interceptors/:name
+DELETE /api/interceptors/:name
+```
+
+Rules:
+
+```text
+Names are plain filenames, never paths
+Resolved paths must stay inside their directory
+Source is parsed before it is written
+A write that does not compile returns 422 and changes nothing
+New files follow the project's module system (.cjs when ESM)
+Existing files keep the extension they already have
+```
+
+Reason:
+
+The original scope excluded this on the grounds that users have their own
+editors. In practice it breaks the core flow — creating a route in the UI
+and then being sent elsewhere to write the file that route points at.
+
+Dependencies remain the user's own. A handler may require anything
+installed in their project; Mockr installs nothing.
 
 ---
 
@@ -1339,8 +1369,8 @@ Do not implement:
 * Cloud sync
 * Plugin marketplace
 * Sandboxed user code
-* Editing JS files from the UI
 * ESM user code
+* Managing the user's dependencies
 
 ---
 
@@ -1397,3 +1427,12 @@ This is the complete MVP scope.
 | 18 | Request logging | Live stdout log. Not recording. |
 | 19 | UI's missing endpoints | Added discovery, status, and `GET /api/routes/:id`. |
 | 20 | Testing | Unit, integration, and mandatory reload tests. |
+
+## Revisions after implementation
+
+| Question | Decision |
+|----------|----------|
+| Projects with `"type": "module"` | `.cjs` and `.js` both resolve; scaffolding picks by project type. A CommonJS `.js` file cannot load in an ESM project, so the error names the rename that fixes it. |
+| Editing JS from the UI | Now in scope. Sources are readable and writable over the admin API, parsed before saving. |
+| Package name | `mockr` is taken by a package last published in 2014, so this ships as `mockrjs` with a `mockr` binary. |
+| Watcher startup | `start()` waits for chokidar's initial scan, otherwise edits made moments after boot are silently dropped. |
