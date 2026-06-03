@@ -283,3 +283,34 @@ test('interceptors run in declared order', async () => {
     project.cleanup();
   }
 });
+
+test('a load failure reports the cause once, without a require stack', async () => {
+  const { project, pipeline } = build({
+    'interceptors/needsDep.js': `require('definitely-not-installed-anywhere');`,
+  });
+  try {
+    const out = await pipeline.execute(
+      match({ method: 'GET', path: '/x', response: { status: 200 }, request: { interceptors: ['needsDep'] } }),
+      request(),
+    );
+    assert.equal(out.body.interceptor, 'needsDep');
+    assert.match(out.body.error, /Cannot find module/);
+    assert.equal(out.body.error.includes('\n'), false, 'the require stack should not be included');
+    assert.equal(out.body.message, undefined, 'error and message should not duplicate each other');
+  } finally {
+    project.cleanup();
+  }
+});
+
+test('a handler load failure keeps its label and reports the cause separately', async () => {
+  const { project, pipeline } = build({
+    'handlers/needsDep.js': `require('definitely-not-installed-anywhere');`,
+  });
+  try {
+    const out = await pipeline.execute(match({ method: 'GET', path: '/x', handler: 'needsDep' }), request());
+    assert.equal(out.body.error, 'handler failed to load');
+    assert.match(out.body.message, /Cannot find module/);
+  } finally {
+    project.cleanup();
+  }
+});

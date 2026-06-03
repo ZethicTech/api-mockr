@@ -116,8 +116,19 @@ export class Pipeline {
     extra: Record<string, unknown>,
   ): PipelineOutcome {
     const shape = readThrown(err);
+    // Node appends a "Require stack" to module errors; the first line is the
+    // part worth returning, and repeating it in two fields helps nobody.
+    const summary = shape.message.split('\n')[0];
     const body =
-      shape.body !== undefined ? shape.body : { ...extra, error: extra.error ?? shape.message, message: shape.message };
+      shape.body !== undefined
+        ? shape.body
+        : {
+            ...extra,
+            error: extra.error ?? summary,
+            // Only carry a separate message when `error` is a fixed label and
+            // would otherwise hide what actually went wrong.
+            ...(extra.error !== undefined ? { message: summary } : {}),
+          };
 
     // User code that sets err.status is expressing an intended outcome (a 401,
     // a 400 rejection). That is not a fault, so it gets no stack trace — the
