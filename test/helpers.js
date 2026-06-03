@@ -17,11 +17,11 @@ function tempProject(files = {}) {
   return {
     dir,
     file: (rel) => path.join(dir, rel),
-    write: (rel, content) =>
-      fs.writeFileSync(
-        path.join(dir, rel),
-        typeof content === 'string' ? content : JSON.stringify(content, null, 2),
-      ),
+    write: (rel, content) => {
+      const file = path.join(dir, rel);
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+      fs.writeFileSync(file, typeof content === 'string' ? content : JSON.stringify(content, null, 2));
+    },
     read: (rel) => fs.readFileSync(path.join(dir, rel), 'utf8'),
     cleanup: () => fs.rmSync(dir, { recursive: true, force: true }),
   };

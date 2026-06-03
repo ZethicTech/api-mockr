@@ -14,6 +14,16 @@ const requireUser = createRequire(__filename);
 export abstract class ModuleLoader<T> {
   protected cache = new Map<string, T>();
 
+  /**
+   * Called when a module loads successfully.
+   *
+   * A failed load is not cached, so a module that failed only because its
+   * dependency was missing starts working the moment the user installs it —
+   * without touching a file. The registry listens here so its recorded error
+   * clears too, instead of the UI warning about something already fixed.
+   */
+  onLoadSuccess?: (name: string) => void;
+
   constructor(
     protected baseDir: string,
     protected kind: 'handler' | 'interceptor',
@@ -62,6 +72,7 @@ export abstract class ModuleLoader<T> {
 
     const value = fn as T;
     this.cache.set(name, value);
+    this.onLoadSuccess?.(name);
     return value;
   }
 

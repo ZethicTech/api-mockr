@@ -30,7 +30,16 @@ export class MemoryRouteRegistry {
     private store: JsonFileStore,
     private handlers: HandlerLoader,
     private interceptors: InterceptorLoader,
-  ) {}
+  ) {
+    this.handlers.onLoadSuccess = (name) => this.clearError('handler', name);
+    this.interceptors.onLoadSuccess = (name) => this.clearError('interceptor', name);
+  }
+
+  /** Drop a recorded failure once that module loads. */
+  private clearError(scope: LoadError['scope'], name: string): void {
+    if (this.errors.length === 0) return;
+    this.errors = this.errors.filter((e) => !(e.scope === scope && e.name === name));
+  }
 
   async load(): Promise<void> {
     await this.reload();

@@ -283,3 +283,33 @@ test('an admin write does not trigger a reload loop', async () => {
     assert.equal((await json('/api/status')).loadedAt, afterWrite);
   });
 });
+
+test('a load error clears once the module can load, without touching a file', async () => {
+  await withServer(
+    async ({ mock, json, project }) => {
+      // The dependency does not exist yet, so the route fails to load.
+      assert.equal((await mock('/users/1')).status, 500);
+      const failing = await until(async () => {
+        const s = await json('/api/status');
+        return s.errors.length > 0 ? s : null;
+      });
+      assert.match(failing.errors[0].message, /Cannot find module/);
+
+      // Installing it is enough — a failed load is never cached.
+      project.write('node_modules/mockr-test-dep/package.json', { name: 'mockr-test-dep', main: 'index.js' });
+      project.write('node_modules/mockr-test-dep/index.js', 'module.exports = { id: () => "ok" };');
+
+      const res = await until(async () => {
+        const r = await mock('/users/1');
+        return r.status === 200 ? r : null;
+      });
+      assert.deepEqual(await res.json(), { id: 'ok' });
+
+      // And the recorded error clears, so the UI stops warning about it.
+      const recovered = await json('/api/status');
+      assert.equal(recovered.errors.length, 0);
+      assert.equal(recovered.ok, true);
+    },
+    { 'handlers/byId.js': `const dep = require('mockr-test-dep');\nmodule.exports = () => ({ status: 200, body: { id: dep.id() } });` },
+  );
+});
