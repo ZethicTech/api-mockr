@@ -187,25 +187,73 @@ what exists and an **Edit code →** link into the editor. New files start from
 a template. Code that does not parse is refused on save, so a typo can never
 replace a handler that was working.
 
-### Dependencies
+### Using npm packages
 
 Handlers and interceptors are ordinary Node modules, so they can require
-anything installed **in your project**:
+anything installed **in your own project**. Install it the normal way:
 
 ```bash
-npm install crypto-js
+npm install jsonwebtoken
 ```
 
+Then require it. Nothing to register, no config:
+
 ```js
-const CryptoJS = require('crypto-js');
+// interceptors/requireAuth.js
+const jwt = require('jsonwebtoken');
+
+const SECRET = process.env.MOCK_JWT_SECRET || 'dev-secret';
 
 module.exports = async function (ctx) {
-  return { body: { signed: CryptoJS.SHA256(ctx.request.body.data).toString() } };
+  const header = ctx.request.headers.authorization || '';
+  const token = header.startsWith('Bearer ') ? header.slice(7) : null;
+
+  if (!token) {
+    ctx.response = { status: 401, headers: {}, body: { error: 'missing bearer token' } };
+    return;
+  }
+
+  try {
+    // Anything you attach to ctx is visible to the handler that runs next.
+    ctx.request.user = jwt.verify(token, SECRET);
+  } catch (err) {
+    ctx.response = { status: 401, headers: {}, body: { error: err.message } };
+  }
 };
 ```
 
-Mockr does not install anything on your behalf, and nothing is bundled — if a
-require fails, install the package in your own project.
+Attach it to any route that should require a token:
+
+```json
+{
+  "method": "GET",
+  "path": "/me",
+  "handler": "me",
+  "request": { "interceptors": ["requireAuth"] }
+}
+```
+
+And the handler reads what the interceptor left behind:
+
+```js
+// handlers/me.js
+module.exports = async function (ctx) {
+  return { body: { id: ctx.request.user.sub, email: ctx.request.user.email } };
+};
+```
+
+Environment variables work as usual, so secrets stay out of the repo:
+
+```bash
+MOCK_JWT_SECRET=something-else npx mockrjs
+```
+
+**If you forget to install the package**, the route returns an error naming the
+missing module and the UI shows it. Installing it fixes things on the next
+request — no restart, and no need to touch the file, because a failed load is
+never cached.
+
+Mockr installs nothing on your behalf and bundles nothing.
 
 ### What a handler receives
 
