@@ -2,6 +2,7 @@ import path from 'node:path';
 import { serve, ServerType } from '@hono/node-server';
 import { FSWatcher } from 'chokidar';
 import { projectPaths, ProjectPaths } from './util/paths';
+import { ServerConfig } from './types';
 import { Logger } from './util/logger';
 import { JsonFileStore } from './storage/JsonFileStore';
 import { HandlerLoader } from './loaders/HandlerLoader';
@@ -22,6 +23,12 @@ export interface StartOptions {
   quiet: boolean;
   watch?: boolean;
   uiDir?: string | null;
+}
+
+/** Read the server block from mockr.json without needing a running store. */
+export async function readServerConfig(dir: string): Promise<ServerConfig> {
+  const paths = projectPaths(dir);
+  return new JsonFileStore(paths).readServerConfig();
 }
 
 export interface RunningMockr {
@@ -58,10 +65,26 @@ export async function start(opts: StartOptions): Promise<RunningMockr> {
   await registry.load();
   reportStatus(registry, logger);
 
+  // What we actually bound. Reloads compare against this, not against the
+  // file's previous contents — by the time a reload runs, the file has
+  // already changed, so comparing it with itself detects nothing.
+  const bound = { port: opts.port, adminPort: opts.adminPort, host: opts.host };
+
   const reload = async () => {
     await registry.reload();
     const status = registry.status();
     logger.reloaded(status.routeCount, status.errors.length);
+
+    // Ports and the bind address are bound once at startup; say so rather
+    // than letting the edit look like it took effect.
+    const wanted = await store.readServerConfig();
+    for (const key of ['port', 'adminPort', 'host'] as const) {
+      if (wanted[key] !== undefined && wanted[key] !== bound[key]) {
+        logger.warn(
+          `"${key}" is ${JSON.stringify(wanted[key])} in mockr.json but mockr is running with ${JSON.stringify(bound[key])} — restart to apply it`,
+        );
+      }
+    }
     for (const err of status.errors) {
       logger.warn(`${err.scope}${err.name ? ` "${err.name}"` : ''}: ${err.message}`);
     }

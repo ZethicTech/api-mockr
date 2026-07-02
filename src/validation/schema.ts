@@ -30,11 +30,24 @@ export const routeSchema = {
   },
 } as const;
 
+export const serverSchema = {
+  type: 'object',
+  additionalProperties: false,
+  properties: {
+    port: { type: 'integer', minimum: 0, maximum: 65535 },
+    adminPort: { type: 'integer', minimum: 0, maximum: 65535 },
+    host: { type: 'string', minLength: 1 },
+    cors: { type: 'boolean' },
+    quiet: { type: 'boolean' },
+  },
+} as const;
+
 export const configSchema = {
   type: 'object',
   additionalProperties: false,
   required: ['routes'],
   properties: {
+    server: serverSchema,
     routes: { type: 'array', items: routeSchema },
   },
 } as const;

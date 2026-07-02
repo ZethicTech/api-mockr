@@ -1,29 +1,24 @@
+import { ServerConfig } from '../types';
+
 export interface CliOptions {
   command: 'start' | 'init' | 'help' | 'version';
   dir: string;
-  port: number;
-  adminPort: number;
-  host: string;
-  cors: boolean;
-  quiet: boolean;
+  /**
+   * Only the settings actually passed on the command line.
+   *
+   * Keeping this partial is what lets mockr.json hold the project's settings:
+   * a default filled in here would be indistinguishable from a real flag and
+   * would override the file every time.
+   */
+  overrides: ServerConfig;
   open: boolean;
 }
-
-export const DEFAULTS = {
-  port: 4000,
-  adminPort: 4100,
-  host: '127.0.0.1',
-};
 
 export function parseArgs(argv: string[]): CliOptions {
   const opts: CliOptions = {
     command: 'start',
     dir: process.cwd(),
-    port: DEFAULTS.port,
-    adminPort: DEFAULTS.adminPort,
-    host: DEFAULTS.host,
-    cors: true,
-    quiet: false,
+    overrides: {},
     open: true,
   };
 
@@ -41,24 +36,27 @@ export function parseArgs(argv: string[]): CliOptions {
     switch (arg) {
       case '--port':
       case '-p':
-        opts.port = requireNumber(arg, args.shift());
+        opts.overrides.port = requireNumber(arg, args.shift());
         break;
       case '--admin-port':
-        opts.adminPort = requireNumber(arg, args.shift());
+        opts.overrides.adminPort = requireNumber(arg, args.shift());
         break;
       case '--host':
-        opts.host = requireValue(arg, args.shift());
+        opts.overrides.host = requireValue(arg, args.shift());
         break;
       case '--dir':
       case '-d':
         opts.dir = requireValue(arg, args.shift());
         break;
+      case '--cors':
+        opts.overrides.cors = true;
+        break;
       case '--no-cors':
-        opts.cors = false;
+        opts.overrides.cors = false;
         break;
       case '--quiet':
       case '-q':
-        opts.quiet = true;
+        opts.overrides.quiet = true;
         break;
       case '--no-open':
         opts.open = false;
@@ -74,10 +72,6 @@ export function parseArgs(argv: string[]): CliOptions {
       default:
         throw new Error(`unknown option "${arg}"`);
     }
-  }
-
-  if (opts.port === opts.adminPort) {
-    throw new Error('--port and --admin-port must differ');
   }
 
   return opts;
@@ -110,11 +104,21 @@ export const HELP = `
         --admin-port admin API + UI port               default 4100
         --host       bind address                      default 127.0.0.1
     -d, --dir        project directory                 default cwd
+        --cors       enable permissive CORS            default on
         --no-cors    disable permissive CORS
         --no-open    do not open the browser
     -q, --quiet      suppress the request log
     -h, --help       show this help
     -v, --version    show the version
+
+  Settings can also live in mockr.json, so they are shared with the project:
+
+    {
+      "server": { "port": 4000, "adminPort": 4100 },
+      "routes": []
+    }
+
+  Flags win over the file, and the file wins over the defaults.
 
   Binding to a non-loopback --host exposes arbitrary local code execution
   to your network. Handlers and interceptors are not sandboxed.

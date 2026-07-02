@@ -40,7 +40,12 @@ export function validateConfig(
     return { ok: false, issues };
   }
 
-  const { routes } = config as MockrConfig;
+  const { routes, server } = config as MockrConfig;
+
+  if (server?.port !== undefined && server.port === server.adminPort) {
+    issues.push({ path: '/server', message: '"port" and "adminPort" must differ' });
+  }
+
   const seen = new Map<string, number>();
 
   routes.forEach((route, i) => {

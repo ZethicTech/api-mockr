@@ -21,9 +21,36 @@ export interface MockRoute {
   handler?: string;
 }
 
+/** Server settings, as written in mockr.json. All optional. */
+export interface ServerConfig {
+  port?: number;
+  adminPort?: number;
+  host?: string;
+  cors?: boolean;
+  quiet?: boolean;
+}
+
 export interface MockrConfig {
+  server?: ServerConfig;
   routes: MockRoute[];
 }
+
+/** Every server setting, resolved to a concrete value. */
+export interface ResolvedServerConfig {
+  port: number;
+  adminPort: number;
+  host: string;
+  cors: boolean;
+  quiet: boolean;
+}
+
+export const SERVER_DEFAULTS: ResolvedServerConfig = {
+  port: 4000,
+  adminPort: 4100,
+  host: '127.0.0.1',
+  cors: true,
+  quiet: false,
+};
 
 /** What a handler or interceptor sees. `response` is undefined during the request phase. */
 export interface Ctx {

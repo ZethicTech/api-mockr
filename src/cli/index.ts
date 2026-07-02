@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { parseArgs, HELP } from './args';
-import { start } from '../app';
+import { readServerConfig, start } from '../app';
+import { describeConflict, resolveConfig } from '../config';
 import { projectPaths } from '../util/paths';
 import { scaffold } from '../scaffold';
 import { Logger } from '../util/logger';
@@ -27,8 +28,6 @@ async function main(): Promise<void> {
     return;
   }
 
-  const logger = new Logger({ quiet: opts.quiet });
-
   if (opts.command === 'init') {
     const paths = projectPaths(opts.dir);
     const { created, esm } = scaffold(paths);
@@ -43,13 +42,25 @@ async function main(): Promise<void> {
     return;
   }
 
+  // Flags beat mockr.json, which beats the defaults.
+  const config = resolveConfig(await readServerConfig(opts.dir), opts.overrides);
+  const logger = new Logger({ quiet: config.values.quiet });
+
+  const conflict = describeConflict(config);
+  if (conflict) {
+    logger.error(conflict);
+    process.exit(1);
+  }
+
   let running;
   try {
-    running = await start(opts);
+    running = await start({ dir: opts.dir, ...config.values });
   } catch (err) {
     const e = err as NodeJS.ErrnoException;
     if (e.code === 'EADDRINUSE') {
-      logger.error(`port already in use — try: mockr --port ${opts.port + 1}`);
+      logger.error(
+        `port already in use — try: mockr --port ${config.values.port + 1} --admin-port ${config.values.adminPort + 1}`,
+      );
     } else {
       logger.error('failed to start', e);
     }
@@ -57,11 +68,14 @@ async function main(): Promise<void> {
   }
 
   const status = running.registry.status();
+  const from = (key: 'port' | 'adminPort') =>
+    config.sources[key] === 'default' ? '' : `  (${config.sources[key]})`;
+
   console.log('');
   console.log(`  mockr  ${status.routeCount} route(s)`);
   console.log('');
-  running.logger.ready('mock', `http://${opts.host}:${running.mockPort}`);
-  running.logger.ready('ui', `http://${opts.host}:${running.adminPort}`);
+  running.logger.ready('mock', `http://${config.values.host}:${running.mockPort}${from('port')}`);
+  running.logger.ready('ui', `http://${config.values.host}:${running.adminPort}${from('adminPort')}`);
   console.log('');
 
   const shutdown = async () => {
