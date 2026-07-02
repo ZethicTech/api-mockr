@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import fsSync from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import { MockRoute, MockrConfig } from '../types';
+import { MockRoute, MockrConfig, ServerConfig } from '../types';
 import { ProjectPaths } from '../util/paths';
 
 export function hashContent(content: string): string {
@@ -72,8 +72,29 @@ export class JsonFileStore {
     return config.routes;
   }
 
+  /**
+   * Replace the routes, preserving everything else in the file.
+   *
+   * mockr.json is the user's file and holds their server settings too;
+   * writing { routes } alone would silently delete them on the next save.
+   */
   async saveRoutes(routes: MockRoute[]): Promise<void> {
-    await this.write({ routes });
+    let existing: MockrConfig;
+    try {
+      existing = (await this.read()).config;
+    } catch {
+      existing = { routes: [] };
+    }
+    await this.write({ ...existing, routes });
+  }
+
+  /** Server settings as written in the file, or {} if unreadable. */
+  async readServerConfig(): Promise<ServerConfig> {
+    try {
+      return (await this.read()).config.server ?? {};
+    } catch {
+      return {};
+    }
   }
 
   /** Atomic write: a crash mid-write must never truncate the user's config. */
