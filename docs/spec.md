@@ -1436,3 +1436,6 @@ This is the complete MVP scope.
 | Editing JS from the UI | Now in scope. Sources are readable and writable over the admin API, parsed before saving. |
 | Package name | `mockr` is taken by a package last published in 2014, so this ships as `mockrjs` with a `mockr` binary. |
 | Watcher startup | `start()` waits for chokidar's initial scan, otherwise edits made moments after boot are silently dropped. |
+| Server settings | Configurable in a `server` block in `mockr.json`, not only by flag. Flags beat the file, the file beats the defaults, resolved per key. |
+| Writing `mockr.json` | `saveRoutes` merges into the existing document instead of replacing it, so the user's `server` block survives a route save. |
+| Changing ports at runtime | Ports and host bind once. A reload that finds them changed warns to restart instead of appearing to apply. |

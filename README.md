@@ -399,6 +399,51 @@ error tells you exactly which file to rename.
 
 ---
 
+## Ports and settings
+
+Both ports are configurable, either per run or per project.
+
+### On the command line
+
+```bash
+npx mockrjs --port 4000 --admin-port 4100
+```
+
+### In mockr.json
+
+So the whole team gets the same ports without typing flags:
+
+```json
+{
+  "server": {
+    "port": 4000,
+    "adminPort": 4100,
+    "host": "127.0.0.1",
+    "cors": true,
+    "quiet": false
+  },
+  "routes": []
+}
+```
+
+**Flags beat the file, and the file beats the defaults — per setting.** So
+this keeps the file's `adminPort` and overrides only the mock port:
+
+```bash
+npx mockrjs --port 6001
+```
+
+```
+  ● mock   http://127.0.0.1:6001  (flag)
+  ● ui     http://127.0.0.1:5556  (file)
+```
+
+Saving routes from the UI never touches your `server` block.
+
+`port`, `adminPort` and `host` are bound once at startup. Editing them while
+Mockr is running prints a warning telling you to restart, rather than letting
+the change look like it applied. Everything else hot reloads.
+
 ## CLI
 
 ```bash
@@ -412,7 +457,7 @@ mockr init               # scaffold only
 | `--admin-port` | `4100` | UI and API port |
 | `--host` | `127.0.0.1` | bind address |
 | `-d, --dir` | cwd | project directory |
-| `--no-cors` | | disable permissive CORS |
+| `--cors` / `--no-cors` | on | permissive CORS |
 | `-q, --quiet` | | silence the request log |
 
 ---
