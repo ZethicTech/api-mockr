@@ -17,11 +17,14 @@
     "build": "npm run build:server && npm run build:ui",
     "build:server": "tsc -p tsconfig.json",
     "build:ui": "vite build --config ui/vite.config.ts",
-    "dev": "tsc -p tsconfig.json --watch",
+    "dev": "npm run build:server && npm run dev:all",
     "start": "node dist/cli/index.js",
     "test": "npm run build:server && node --test test/*.test.js",
     "prepublishOnly": "npm run build && npm test",
-    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p ui/tsconfig.json"
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p ui/tsconfig.json",
+    "dev:all": "node dist/cli/index.js --dir demo & vite --config ui/vite.config.ts",
+    "dev:server": "node dist/cli/index.js --dir demo",
+    "dev:ui": "vite --config ui/vite.config.ts"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.1",

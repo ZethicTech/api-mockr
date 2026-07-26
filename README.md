@@ -559,13 +559,31 @@ them with your dev server's own proxy rules.
 
 ```bash
 npm install
-npm run build
-npm test
+npm run dev
 ```
 
-- `npm run build:server` — TypeScript to `dist/`
-- `npm run build:ui` — Preact and Tailwind to `dist/ui/`
-- `npm test` — unit and end-to-end tests, including reload
+That starts three things against a scratch project in `demo/`:
+
+```
+  mock server   http://localhost:4000    the mocks
+  admin + UI    http://localhost:4100    the built UI
+  vite dev      http://localhost:5180    the UI with hot module reload
+```
+
+Work on the UI at **:5180** — it proxies `/api` to the admin server, so it
+talks to the real backend while reloading instantly on save. Use **:4100** to
+check the production bundle.
+
+| | |
+|---|---|
+| `npm run dev` | everything, against `demo/` |
+| `npm run dev:server` | server only |
+| `npm run dev:ui` | Vite only |
+| `npm run build` | server to `dist/`, UI to `dist/ui/` |
+| `npm test` | unit and end-to-end tests, including reload |
+| `npm run typecheck` | both TypeScript projects |
+
+`demo/` is gitignored and scaffolds itself on first run.
 
 The architecture and the reasoning behind each decision are in
 [`docs/spec.md`](docs/spec.md).
