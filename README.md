@@ -562,23 +562,21 @@ npm install
 npm run dev
 ```
 
-That starts three things against a scratch project in `demo/`:
+That runs the server against a scratch project in `demo/`, with the UI
+rebuilding on save:
 
 ```
-  mock server   http://localhost:4000    the mocks
-  admin + UI    http://localhost:4100    the built UI
-  vite dev      http://localhost:5180    the UI with hot module reload
+  mock server   http://localhost:4000
+  admin + UI    http://localhost:4100
 ```
 
-Work on the UI at **:5180** — it proxies `/api` to the admin server, so it
-talks to the real backend while reloading instantly on save. Use **:4100** to
-check the production bundle.
+Two ports, the same two the product uses — the UI is served by the admin
+server, in development exactly as in production. Editing anything under `ui/`
+rebuilds in about 200ms; refresh to see it.
 
 | | |
 |---|---|
-| `npm run dev` | everything, against `demo/` |
-| `npm run dev:server` | server only |
-| `npm run dev:ui` | Vite only |
+| `npm run dev` | server plus UI rebuild, against `demo/` |
 | `npm run build` | server to `dist/`, UI to `dist/ui/` |
 | `npm test` | unit and end-to-end tests, including reload |
 | `npm run typecheck` | both TypeScript projects |
