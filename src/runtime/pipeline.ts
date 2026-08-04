@@ -41,7 +41,7 @@ export class Pipeline {
     for (const name of route.request?.interceptors ?? []) {
       try {
         const interceptor = this.interceptors.load(name);
-        await interceptor(ctx);
+        await interceptor(ctx, this.interceptors.configFor(name));
       } catch (err) {
         return this.fromError(err, 400, `interceptor:${name}`, { interceptor: name });
       }
@@ -58,7 +58,10 @@ export class Pipeline {
         via = `handler:${route.handler}`;
         try {
           const handler = this.handlers.load(route.handler);
-          const result = (await handler(ctx)) as HandlerResult | undefined | void;
+          const result = (await handler(ctx, this.handlers.configFor(route.handler))) as
+            | HandlerResult
+            | undefined
+            | void;
           ctx.response = normalizeResult(result);
         } catch (err) {
           if (err instanceof ModuleLoadError) {
@@ -84,7 +87,7 @@ export class Pipeline {
     for (const name of route.response?.interceptors ?? []) {
       try {
         const interceptor = this.interceptors.load(name);
-        await interceptor(ctx);
+        await interceptor(ctx, this.interceptors.configFor(name));
       } catch (err) {
         // The request was fine; this failure is server-side, so 500 not 400.
         return this.fromError(err, 500, `interceptor:${name}`, { interceptor: name });

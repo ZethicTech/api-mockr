@@ -1,5 +1,7 @@
 import { createRequire } from 'node:module';
 import { ModuleLoadError } from '../errors';
+import { ModuleConfigBlock } from '../types';
+import { expandEnv } from '../util/env';
 import { findModuleFile, moduleCandidates, resolveModuleBase } from '../util/paths';
 
 const requireUser = createRequire(__filename);
@@ -24,15 +26,54 @@ export abstract class ModuleLoader<T> {
    */
   onLoadSuccess?: (name: string) => void;
 
+  /** Per-module settings from mockr.json, refreshed on every reload. */
+  private configBlock: ModuleConfigBlock = {};
+
   constructor(
     protected baseDir: string,
     protected kind: 'handler' | 'interceptor',
   ) {}
 
+  /**
+   * Replace the settings block. Cached built-ins are dropped because they
+   * capture their configuration when constructed.
+   */
+  setConfig(block: ModuleConfigBlock): void {
+    this.configBlock = block;
+    this.dropBuiltins();
+  }
+
+  /** The settings for one module, with ${VAR} references expanded. */
+  configFor(name: string): Record<string, unknown> {
+    return expandEnv(this.configBlock[name] ?? {});
+  }
+
+  /** Built-ins are provided by Mockr; subclasses map a name to one. */
+  protected createBuiltin?(name: string, config: Record<string, unknown>): T;
+
+  protected dropBuiltins(): void {
+    for (const name of [...this.cache.keys()]) {
+      if (name.startsWith('@')) this.cache.delete(name);
+    }
+  }
+
   /** Load (or return cached) module by name. Throws ModuleLoadError. */
   load(name: string): T {
     const cached = this.cache.get(name);
     if (cached) return cached;
+
+    if (name.startsWith('@')) {
+      if (!this.createBuiltin) throw new ModuleLoadError(this.kind, name, new Error('unknown built-in'));
+      let builtin: T;
+      try {
+        builtin = this.createBuiltin(name, this.configFor(name));
+      } catch (err) {
+        throw new ModuleLoadError(this.kind, name, err as Error);
+      }
+      this.cache.set(name, builtin);
+      this.onLoadSuccess?.(name);
+      return builtin;
+    }
 
     let resolved: string | null;
     try {

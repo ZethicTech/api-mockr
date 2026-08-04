@@ -1,4 +1,4 @@
-import { LoadError, MockRoute, RegistryStatus, RouteMatch } from '../types';
+import { LoadError, MockRoute, MockrConfig, RegistryStatus, RouteMatch } from '../types';
 import { RouteMatcher } from '../matcher/RouteMatcher';
 import { JsonFileStore } from '../storage/JsonFileStore';
 import { HandlerLoader } from '../loaders/HandlerLoader';
@@ -49,17 +49,22 @@ export class MemoryRouteRegistry {
   async reload(): Promise<void> {
     const errors: LoadError[] = [];
     let routes: MockRoute[];
+    let document: MockrConfig;
 
     try {
       const { config } = await this.store.read();
+      document = config;
       routes = config.routes;
+      this.interceptors.setConfig(config.interceptors ?? {});
+      this.handlers.setConfig(config.handlers ?? {});
     } catch (err) {
       errors.push({ scope: 'config', message: (err as Error).message });
       this.errors = errors;
       return;
     }
 
-    const result = validateConfig({ routes }, this.paths, { checkFiles: true });
+    // The whole document, so built-ins are validated against their settings.
+    const result = validateConfig(document, this.paths, { checkFiles: true });
     if (!result.ok) {
       for (const issue of result.issues) {
         errors.push({ scope: 'config', message: `${issue.path}: ${issue.message}` });

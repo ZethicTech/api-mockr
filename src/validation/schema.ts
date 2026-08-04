@@ -42,12 +42,20 @@ export const serverSchema = {
   },
 } as const;
 
+/** Per-module settings are free-form: user modules define their own shape. */
+export const moduleConfigSchema = {
+  type: 'object',
+  additionalProperties: { type: 'object' },
+} as const;
+
 export const configSchema = {
   type: 'object',
   additionalProperties: false,
   required: ['routes'],
   properties: {
     server: serverSchema,
+    interceptors: moduleConfigSchema,
+    handlers: moduleConfigSchema,
     routes: { type: 'array', items: routeSchema },
   },
 } as const;

@@ -30,8 +30,15 @@ export interface ServerConfig {
   quiet?: boolean;
 }
 
+/** Per-module settings, keyed by handler or interceptor name. */
+export type ModuleConfigBlock = Record<string, Record<string, unknown>>;
+
 export interface MockrConfig {
   server?: ServerConfig;
+  /** Settings for interceptors, built-in and user-written alike. */
+  interceptors?: ModuleConfigBlock;
+  /** Settings for handlers. */
+  handlers?: ModuleConfigBlock;
   routes: MockRoute[];
 }
 
@@ -79,8 +86,13 @@ export interface HandlerResult {
   body?: unknown;
 }
 
-export type RouteHandler = (ctx: Ctx) => Promise<HandlerResult | void> | HandlerResult | void;
-export type Interceptor = (ctx: Ctx) => Promise<void> | void;
+/** Both receive their configuration block as a second argument. */
+export type RouteHandler = (
+  ctx: Ctx,
+  config: Record<string, unknown>,
+) => Promise<HandlerResult | void> | HandlerResult | void;
+
+export type Interceptor = (ctx: Ctx, config: Record<string, unknown>) => Promise<void> | void;
 
 export interface RouteMatch {
   route: MockRoute;
