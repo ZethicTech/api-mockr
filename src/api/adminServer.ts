@@ -8,6 +8,7 @@ import { JsonFileStore, generateRouteId } from '../storage/JsonFileStore';
 import { validateConfig } from '../validation/validate';
 import { MockRoute, MockrConfig } from '../types';
 import { MODULE_EXTENSIONS, ProjectPaths } from '../util/paths';
+import { BUILTIN_HANDLERS, BUILTIN_INTERCEPTORS } from '../builtin';
 import {
   InvalidModuleName,
   ModuleFileStore,
@@ -41,8 +42,12 @@ export function createAdminServer(opts: AdminServerOptions): Hono {
   });
 
   // ── Discovery ─────────────────────────────────────────────────────────────
-  app.get('/api/handlers', (c) => c.json({ handlers: listModules(paths.handlersDir) }));
-  app.get('/api/interceptors', (c) => c.json({ interceptors: listModules(paths.interceptorsDir) }));
+  app.get('/api/handlers', (c) =>
+    c.json({ handlers: listModules(paths.handlersDir), builtins: describe(BUILTIN_HANDLERS) }),
+  );
+  app.get('/api/interceptors', (c) =>
+    c.json({ interceptors: listModules(paths.interceptorsDir), builtins: describe(BUILTIN_INTERCEPTORS) }),
+  );
 
   // ── Module sources ────────────────────────────────────────────────────────
   // Handlers and interceptors are editable from the UI. Any dependency they
@@ -224,6 +229,13 @@ async function reject(
 async function persist(opts: AdminServerOptions, routes: MockRoute[]): Promise<void> {
   await opts.store.saveRoutes(routes);
   await opts.reload();
+}
+
+/** Built-ins the UI can offer alongside the user's own files. */
+function describe(
+  builtins: Record<string, { name: string; summary: string }>,
+): Array<{ name: string; summary: string }> {
+  return Object.values(builtins).map(({ name, summary }) => ({ name, summary }));
 }
 
 function listModules(dir: string): string[] {

@@ -37,6 +37,15 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export type ModuleKind = 'handlers' | 'interceptors';
 
+export interface Builtin {
+  name: string;
+  summary: string;
+}
+
+export type ModuleListing<K extends ModuleKind> = { builtins: Builtin[] } & {
+  [P in K]: string[];
+};
+
 export interface ModuleFile {
   name: string;
   file: string;
@@ -47,8 +56,8 @@ export interface ModuleFile {
 export const api = {
   status: () => request<Status>('/api/status'),
   routes: () => request<{ routes: MockRoute[] }>('/api/routes').then((r) => r.routes),
-  handlers: () => request<{ handlers: string[] }>('/api/handlers').then((r) => r.handlers),
-  interceptors: () => request<{ interceptors: string[] }>('/api/interceptors').then((r) => r.interceptors),
+  handlers: () => request<ModuleListing<'handlers'>>('/api/handlers'),
+  interceptors: () => request<ModuleListing<'interceptors'>>('/api/interceptors'),
 
   create: (route: Omit<MockRoute, 'id'>) =>
     request<MockRoute>('/api/routes', { method: 'POST', body: JSON.stringify(route) }),

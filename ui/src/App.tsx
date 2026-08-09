@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'preact/hooks';
-import { api, ApiError, ModuleKind } from './api';
+import { api, ApiError, Builtin, ModuleKind } from './api';
 import type { MockRoute, Status, ValidationIssue } from './types';
 import { RouteList } from './components/RouteList';
 import { Draft, RouteEditor, draftToRoute, emptyDraft, toDraft } from './components/RouteEditor';
@@ -14,6 +14,8 @@ export function App() {
   const [status, setStatus] = useState<Status | null>(null);
   const [handlers, setHandlers] = useState<string[]>([]);
   const [interceptors, setInterceptors] = useState<string[]>([]);
+  const [handlerBuiltins, setHandlerBuiltins] = useState<Builtin[]>([]);
+  const [interceptorBuiltins, setInterceptorBuiltins] = useState<Builtin[]>([]);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -35,8 +37,10 @@ export function App() {
       api.interceptors(),
     ]);
     setRoutes(nextRoutes);
-    setHandlers(nextHandlers);
-    setInterceptors(nextInterceptors);
+    setHandlers(nextHandlers.handlers);
+    setHandlerBuiltins(nextHandlers.builtins);
+    setInterceptors(nextInterceptors.interceptors);
+    setInterceptorBuiltins(nextInterceptors.builtins);
     return nextRoutes;
   }, []);
 
@@ -259,6 +263,8 @@ export function App() {
             error={error}
             handlers={handlers}
             interceptors={interceptors}
+            handlerBuiltins={handlerBuiltins}
+            interceptorBuiltins={interceptorBuiltins}
             onChange={setDraft}
             onSave={save}
             onDelete={remove}

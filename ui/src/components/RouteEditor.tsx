@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'preact/hooks';
+import type { Builtin } from '../api';
 import type { MockRoute, ValidationIssue } from '../types';
 import { HTTP_METHODS } from '../types';
 import { Button, Input, Label, Select, WarnIcon } from './primitives';
@@ -108,6 +109,8 @@ interface Props {
   error: string | null;
   handlers: string[];
   interceptors: string[];
+  handlerBuiltins: Builtin[];
+  interceptorBuiltins: Builtin[];
   onChange: (draft: Draft) => void;
   onSave: () => void;
   onDelete: () => void;
@@ -223,7 +226,7 @@ export function RouteEditor(props: Props) {
           <div>
             <div class="flex items-baseline justify-between">
               <Label hint="a file in handlers/">Handler</Label>
-              {draft.handler && (
+              {draft.handler && !draft.handler.startsWith('@') && (
                 <button
                   type="button"
                   onClick={() => props.onEditModule('handlers', draft.handler)}
@@ -233,14 +236,27 @@ export function RouteEditor(props: Props) {
                 </button>
               )}
             </div>
-            {handlers.length > 0 ? (
+            {handlers.length > 0 || props.handlerBuiltins.length > 0 ? (
               <Select value={draft.handler} onChange={(e) => set('handler', (e.target as HTMLSelectElement).value)}>
                 <option value="">Select a handler…</option>
-                {handlers.map((name) => (
-                  <option key={name} value={name}>
-                    {name}
-                  </option>
-                ))}
+                {handlers.length > 0 && (
+                  <optgroup label="Your handlers">
+                    {handlers.map((name) => (
+                      <option key={name} value={name}>
+                        {name}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+                {props.handlerBuiltins.length > 0 && (
+                  <optgroup label="Built in">
+                    {props.handlerBuiltins.map((b) => (
+                      <option key={b.name} value={b.name}>
+                        {b.name} — {b.summary}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
               </Select>
             ) : (
               <p class="text-xs text-[var(--color-muted)]">
@@ -315,6 +331,7 @@ export function RouteEditor(props: Props) {
             <InterceptorPicker
               selected={draft.requestInterceptors}
               available={interceptors}
+              builtins={props.interceptorBuiltins}
               onChange={(next) => set('requestInterceptors', next)}
             />
           </div>
@@ -323,6 +340,7 @@ export function RouteEditor(props: Props) {
             <InterceptorPicker
               selected={draft.responseInterceptors}
               available={interceptors}
+              builtins={props.interceptorBuiltins}
               onChange={(next) => set('responseInterceptors', next)}
             />
           </div>
