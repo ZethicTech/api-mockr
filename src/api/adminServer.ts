@@ -6,7 +6,7 @@ import { serveStatic } from '@hono/node-server/serve-static';
 import { MemoryRouteRegistry } from '../registry/MemoryRouteRegistry';
 import { JsonFileStore, generateRouteId } from '../storage/JsonFileStore';
 import { validateConfig } from '../validation/validate';
-import { MockRoute } from '../types';
+import { MockRoute, MockrConfig } from '../types';
 import { MODULE_EXTENSIONS, ProjectPaths } from '../util/paths';
 import {
   InvalidModuleName,
@@ -113,7 +113,7 @@ export function createAdminServer(opts: AdminServerOptions): Hono {
     const route = { ...(input as MockRoute), id };
     const next = [...routes, route];
 
-    const invalid = reject(next, paths);
+    const invalid = await reject(next, paths, store);
     if (invalid) return c.json(invalid, 422);
 
     await persist(opts, next);
@@ -134,7 +134,7 @@ export function createAdminServer(opts: AdminServerOptions): Hono {
     const next = [...routes];
     next[index] = route;
 
-    const invalid = reject(next, paths);
+    const invalid = await reject(next, paths, store);
     if (invalid) return c.json(invalid, 422);
 
     await persist(opts, next);
@@ -198,9 +198,25 @@ async function safeJson(c: { req: { json: () => Promise<unknown> } }): Promise<u
   }
 }
 
-/** Validate before persisting. A rejected write never touches the file. */
-function reject(routes: MockRoute[], paths: ProjectPaths): { error: string; issues: unknown[] } | null {
-  const result = validateConfig({ routes }, paths, { checkFiles: true });
+/**
+ * Validate before persisting. A rejected write never touches the file.
+ *
+ * The existing document is validated with the new routes, so a route using a
+ * built-in is checked against the settings actually in the file.
+ */
+async function reject(
+  routes: MockRoute[],
+  paths: ProjectPaths,
+  store: JsonFileStore,
+): Promise<{ error: string; issues: unknown[] } | null> {
+  let document: MockrConfig = { routes };
+  try {
+    document = { ...(await store.read()).config, routes };
+  } catch {
+    // Unreadable file: validate what we can rather than refusing the write.
+  }
+
+  const result = validateConfig(document, paths, { checkFiles: true });
   if (result.ok) return null;
   return { error: 'validation failed', issues: result.issues };
 }

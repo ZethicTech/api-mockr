@@ -313,3 +313,151 @@ test('a load error clears once the module can load, without touching a file', as
     { 'handlers/byId.js': `const dep = require('mockr-test-dep');\nmodule.exports = () => ({ status: 200, body: { id: dep.id() } });` },
   );
 });
+
+test('built-in auth works end to end from config', async () => {
+  const project = tempProject({
+    'mockr.json': {
+      interceptors: { '@jwt': { secret: '${TEST_JWT_SECRET}' }, '@apiKey': { key: 'sk_1' } },
+      handlers: { '@jwt.sign': { secret: '${TEST_JWT_SECRET}', expiresInSeconds: 60 } },
+      routes: [
+        { id: 'r_login', method: 'POST', path: '/login', handler: '@jwt.sign' },
+        { id: 'r_me', method: 'GET', path: '/me', handler: 'whoami', request: { interceptors: ['@jwt'] } },
+        {
+          id: 'r_paid',
+          method: 'GET',
+          path: '/paid',
+          response: { status: 200, body: { ok: true } },
+          request: { interceptors: ['@apiKey'] },
+        },
+      ],
+    },
+    'handlers/whoami.js': 'module.exports = (ctx) => ({ body: { sub: ctx.request.user.sub } });',
+  });
+
+  process.env.TEST_JWT_SECRET = 'integration-secret';
+  const server = await start({
+    dir: project.dir,
+    port: 0,
+    adminPort: 0,
+    host: '127.0.0.1',
+    cors: true,
+    quiet: true,
+    uiDir: null,
+  });
+  const mock = (p, init) => fetch(`http://127.0.0.1:${server.mockPort}${p}`, init);
+
+  try {
+    assert.equal((await mock('/me')).status, 401);
+
+    const issued = await mock('/login', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ sub: '42' }),
+    });
+    const { token } = await issued.json();
+
+    const me = await mock('/me', { headers: { authorization: `Bearer ${token}` } });
+    assert.equal(me.status, 200);
+    assert.deepEqual(await me.json(), { sub: '42' });
+
+    assert.equal((await mock('/paid')).status, 401);
+    assert.equal((await mock('/paid', { headers: { 'x-api-key': 'sk_1' } })).status, 200);
+  } finally {
+    await server.close();
+    project.cleanup();
+    delete process.env.TEST_JWT_SECRET;
+  }
+});
+
+test('a built-in missing its configuration is reported, not left to fail per request', async () => {
+  const project = tempProject({
+    'mockr.json': {
+      routes: [
+        { id: 'r_x', method: 'GET', path: '/x', response: { status: 200 }, request: { interceptors: ['@jwt'] } },
+      ],
+    },
+  });
+
+  const server = await start({
+    dir: project.dir,
+    port: 0,
+    adminPort: 0,
+    host: '127.0.0.1',
+    cors: true,
+    quiet: true,
+    uiDir: null,
+  });
+
+  try {
+    const status = server.registry.status();
+    assert.equal(status.ok, false);
+    assert.match(status.errors.map((e) => e.message).join(), /needs a "secret" — set it under "interceptors"/);
+  } finally {
+    await server.close();
+    project.cleanup();
+  }
+});
+
+test('an unknown built-in is rejected by name', async () => {
+  const project = tempProject({
+    'mockr.json': {
+      routes: [
+        { id: 'r_x', method: 'GET', path: '/x', response: { status: 200 }, request: { interceptors: ['@nope'] } },
+      ],
+    },
+  });
+
+  const server = await start({
+    dir: project.dir,
+    port: 0,
+    adminPort: 0,
+    host: '127.0.0.1',
+    cors: true,
+    quiet: true,
+    uiDir: null,
+  });
+
+  try {
+    assert.match(server.registry.status().errors.map((e) => e.message).join(), /unknown built-in/);
+  } finally {
+    await server.close();
+    project.cleanup();
+  }
+});
+
+test('user interceptors receive their configured settings', async () => {
+  const project = tempProject({
+    'mockr.json': {
+      interceptors: { tagger: { tag: 'from-config' } },
+      routes: [
+        {
+          id: 'r_x',
+          method: 'GET',
+          path: '/x',
+          response: { status: 200, body: {} },
+          request: { interceptors: ['tagger'] },
+        },
+      ],
+    },
+    'interceptors/tagger.js':
+      'module.exports = (ctx, config) => { ctx.response = { status: 200, headers: {}, body: { tag: config.tag } }; };',
+  });
+
+  const server = await start({
+    dir: project.dir,
+    port: 0,
+    adminPort: 0,
+    host: '127.0.0.1',
+    cors: true,
+    quiet: true,
+    uiDir: null,
+  });
+
+  try {
+    const res = await fetch(`http://127.0.0.1:${server.mockPort}/x`);
+    assert.deepEqual(await res.json(), { tag: 'from-config' });
+  } finally {
+    await server.close();
+    project.cleanup();
+  }
+});
