@@ -29,8 +29,15 @@ function tempProject(files = {}) {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-/** Poll until fn() is truthy, so reload tests are not flaky on slow machines. */
-async function until(fn, timeoutMs = 4000, stepMs = 50) {
+/**
+ * Poll until fn() is truthy.
+ *
+ * The timeout is a safety net, not a target: polling returns the moment the
+ * condition holds, so a generous ceiling costs a passing run nothing. It needs
+ * to be generous because test files run in parallel, and a reload waits on
+ * chokidar's write-finish window plus the debounce on a loaded machine.
+ */
+async function until(fn, timeoutMs = 15000, stepMs = 50) {
   const deadline = Date.now() + timeoutMs;
   for (;;) {
     const result = await fn();
