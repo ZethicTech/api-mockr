@@ -1439,3 +1439,6 @@ This is the complete MVP scope.
 | Server settings | Configurable in a `server` block in `mockr.json`, not only by flag. Flags beat the file, the file beats the defaults, resolved per key. |
 | Writing `mockr.json` | `saveRoutes` merges into the existing document instead of replacing it, so the user's `server` block survives a route save. |
 | Changing ports at runtime | Ports and host bind once. A reload that finds them changed warns to restart instead of appearing to apply. |
+| Module settings | Top-level `interceptors` and `handlers` blocks, keyed by module name, passed to each module as a second argument. `${VAR}` expands from the environment so secrets are named rather than committed. |
+| Built-in modules | `@`-prefixed names are provided by Mockr: `@jwt`, `@apiKey`, `@jwt.sign`. Configured through the same blocks, validated when the config loads rather than on first request. |
+| JWT implementation | HMAC only, on `node:crypto`, rather than adding a JWT dependency. `alg: none` and unlisted algorithms are refused. |

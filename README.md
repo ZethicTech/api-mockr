@@ -290,6 +290,84 @@ printed to the terminal.
 
 ---
 
+## Built-in auth
+
+Requiring a valid token is the most common reason to write an interceptor, and
+it is the same interceptor every time. Mockr ships it. Built-ins start with
+`@`, so they never collide with your own files, and they are **configured
+rather than written**:
+
+```json
+{
+  "interceptors": {
+    "@jwt": { "secret": "${MOCK_JWT_SECRET}" },
+    "@apiKey": { "key": "sk_test_123" }
+  },
+
+  "handlers": {
+    "@jwt.sign": { "secret": "${MOCK_JWT_SECRET}", "expiresInSeconds": 3600 }
+  },
+
+  "routes": [
+    { "method": "POST", "path": "/login", "handler": "@jwt.sign" },
+
+    { "method": "GET", "path": "/me", "handler": "whoami",
+      "request": { "interceptors": ["@jwt"] } },
+
+    { "method": "GET", "path": "/paid", "response": { "status": 200, "body": { "ok": true } },
+      "request": { "interceptors": ["@apiKey"] } }
+  ]
+}
+```
+
+```bash
+MOCK_JWT_SECRET=dev-secret npx mockrjs
+```
+
+`${VAR}` is expanded from the environment, so a secret is named in the file
+rather than written into it — `mockr.json` gets committed with your project.
+
+Now the whole flow works:
+
+```bash
+# get a token
+curl -X POST localhost:4000/login -H 'content-type: application/json'   -d '{"sub":"42","email":"a@b.c"}'
+# → { "token": "eyJhbGci…", "expiresIn": 3600 }
+
+curl localhost:4000/me                                  # → 401 missing authorization header
+curl localhost:4000/me -H "authorization: Bearer $TOKEN" # → { "sub": "42" }
+```
+
+`@jwt` puts the decoded claims on `ctx.request.user`, so your handler just
+reads them:
+
+```js
+module.exports = (ctx) => ({ body: { sub: ctx.request.user.sub } });
+```
+
+| Built-in | |
+|---|---|
+| `@jwt` | Verify a bearer token, attach claims to `ctx.request.user` |
+| `@apiKey` | Require a matching key in a header or query parameter |
+| `@jwt.sign` | Issue a token from the request body (a mock login endpoint) |
+
+### @jwt options
+
+| | default | |
+|---|---|---|
+| `secret` | required | HMAC secret |
+| `algorithms` | `["HS256"]` | allowed algorithms — HS256, HS384, HS512 |
+| `header` | `authorization` | where to read the token |
+| `scheme` | `Bearer` | prefix to strip; `""` for a bare token |
+| `attachTo` | `user` | property on `ctx.request` to hold the claims |
+| `optional` | `false` | allow anonymous requests through |
+| `issuer` / `audience` | | checked when set |
+| `clockTolerance` | `0` | seconds of leeway on `exp` and `nbf` |
+
+Verification is HMAC only, done with `node:crypto` rather than a JWT
+dependency. Unsigned tokens (`alg: none`) and algorithms outside the allowed
+list are rejected.
+
 ## Interceptors
 
 Interceptors are written the same way — the Code tab, or your editor — and are
@@ -309,6 +387,25 @@ attached per route, so one implementation can serve many endpoints:
 ```
 
 Interceptors **mutate `ctx`**. Return values are ignored.
+
+They also receive their own settings from `mockr.json`, so nothing has to be
+hardcoded:
+
+```json
+{
+  "interceptors": {
+    "decrypt": { "algorithm": "aes-256-gcm", "key": "${PAYLOAD_KEY}" }
+  }
+}
+```
+
+```js
+module.exports = async function (ctx, config) {
+  ctx.request.body = decrypt(ctx.request.body, config.key, config.algorithm);
+};
+```
+
+Handlers get the same, from a `handlers` block.
 
 ```js
 // interceptors/decrypt.js
