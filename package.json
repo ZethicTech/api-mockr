@@ -50,10 +50,10 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/arpan-zethic/mockrjs.git"
+    "url": "git+https://github.com/ZethicTech/api-mockr.git"
   },
-  "homepage": "https://github.com/arpan-zethic/mockrjs#readme",
+  "homepage": "https://github.com/ZethicTech/api-mockr#readme",
   "bugs": {
-    "url": "https://github.com/arpan-zethic/mockrjs/issues"
+    "url": "https://github.com/ZethicTech/api-mockr/issues"
   }
 }
