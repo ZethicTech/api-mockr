@@ -15,11 +15,7 @@ export interface BuiltinDefinition {
   validate?: (config: Record<string, unknown>) => string[];
 }
 
-function requireString(
-  config: Record<string, unknown>,
-  key: string,
-  builtin: string,
-): string {
+function requireString(config: Record<string, unknown>, key: string, builtin: string): string {
   const value = config[key];
   if (typeof value !== 'string' || value.length === 0) {
     throw new BuiltinConfigError(

@@ -161,7 +161,10 @@ test('@jwt.sign issues a verifiable token from the request body', async () => {
 });
 
 test('@jwt.sign merges configured claims under the request body', async () => {
-  const handler = BUILTIN_HANDLERS['@jwt.sign'].create({ secret: SECRET, claims: { role: 'user', sub: 'default' } });
+  const handler = BUILTIN_HANDLERS['@jwt.sign'].create({
+    secret: SECRET,
+    claims: { role: 'user', sub: 'default' },
+  });
   const c = ctx();
   c.request.body = { sub: 'override' };
 
@@ -175,7 +178,10 @@ test('@jwt.sign merges configured claims under the request body', async () => {
 test('built-in validators report what is missing', () => {
   assert.deepEqual(BUILTIN_INTERCEPTORS['@jwt'].validate({ secret: 's' }), []);
   assert.match(BUILTIN_INTERCEPTORS['@jwt'].validate({}).join(), /secret/);
-  assert.match(BUILTIN_INTERCEPTORS['@jwt'].validate({ secret: 's', algorithms: ['RS256'] }).join(), /unsupported/);
+  assert.match(
+    BUILTIN_INTERCEPTORS['@jwt'].validate({ secret: 's', algorithms: ['RS256'] }).join(),
+    /unsupported/,
+  );
   assert.match(BUILTIN_INTERCEPTORS['@apiKey'].validate({}).join(), /key/);
 });
 

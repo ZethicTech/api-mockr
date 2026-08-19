@@ -90,8 +90,7 @@ export async function start(opts: StartOptions): Promise<RunningMockr> {
     }
   };
 
-  const uiDir =
-    opts.uiDir === undefined ? path.join(__dirname, 'ui') : opts.uiDir;
+  const uiDir = opts.uiDir === undefined ? path.join(__dirname, 'ui') : opts.uiDir;
 
   const mockApp = createMockServer({ registry, pipeline, logger, cors: opts.cors });
   const adminApp = createAdminServer({
@@ -136,7 +135,11 @@ function reportStatus(registry: MemoryRouteRegistry, logger: Logger): void {
   }
 }
 
-function listen(app: { fetch: (req: Request) => Response | Promise<Response> }, port: number, hostname: string): Promise<ServerType> {
+function listen(
+  app: { fetch: (req: Request) => Response | Promise<Response> },
+  port: number,
+  hostname: string,
+): Promise<ServerType> {
   return new Promise((resolve, reject) => {
     try {
       const server = serve({ fetch: app.fetch, port, hostname }, () => resolve(server));

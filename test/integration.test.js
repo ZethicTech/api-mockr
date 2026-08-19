@@ -96,7 +96,11 @@ test('the admin API updates and deletes routes', async () => {
     const updated = await admin('/api/routes/r_stat01', {
       method: 'PUT',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ method: 'GET', path: '/users', response: { status: 200, body: { users: ['ada'] } } }),
+      body: JSON.stringify({
+        method: 'GET',
+        path: '/users',
+        response: { status: 200, body: { users: ['ada'] } },
+      }),
     });
     assert.equal(updated.status, 200);
     assert.deepEqual(await (await mock('/users')).json(), { users: ['ada'] });
@@ -159,7 +163,9 @@ test('editing a handler on disk hot reloads without a restart', async () => {
 test('editing mockr.json on disk hot reloads without a restart', async () => {
   await withServer(async ({ mock, project }) => {
     project.write('mockr.json', {
-      routes: [{ id: 'r_new001', method: 'GET', path: '/added', response: { status: 200, body: { added: true } } }],
+      routes: [
+        { id: 'r_new001', method: 'GET', path: '/added', response: { status: 200, body: { added: true } } },
+      ],
     });
 
     const res = await until(async () => {
@@ -310,7 +316,9 @@ test('a load error clears once the module can load, without touching a file', as
       assert.equal(recovered.errors.length, 0);
       assert.equal(recovered.ok, true);
     },
-    { 'handlers/byId.js': `const dep = require('mockr-test-dep');\nmodule.exports = () => ({ status: 200, body: { id: dep.id() } });` },
+    {
+      'handlers/byId.js': `const dep = require('mockr-test-dep');\nmodule.exports = () => ({ status: 200, body: { id: dep.id() } });`,
+    },
   );
 });
 
@@ -373,7 +381,13 @@ test('a built-in missing its configuration is reported, not left to fail per req
   const project = tempProject({
     'mockr.json': {
       routes: [
-        { id: 'r_x', method: 'GET', path: '/x', response: { status: 200 }, request: { interceptors: ['@jwt'] } },
+        {
+          id: 'r_x',
+          method: 'GET',
+          path: '/x',
+          response: { status: 200 },
+          request: { interceptors: ['@jwt'] },
+        },
       ],
     },
   });
@@ -391,7 +405,10 @@ test('a built-in missing its configuration is reported, not left to fail per req
   try {
     const status = server.registry.status();
     assert.equal(status.ok, false);
-    assert.match(status.errors.map((e) => e.message).join(), /needs a "secret" — set it under "interceptors"/);
+    assert.match(
+      status.errors.map((e) => e.message).join(),
+      /needs a "secret" — set it under "interceptors"/,
+    );
   } finally {
     await server.close();
     project.cleanup();
@@ -402,7 +419,13 @@ test('an unknown built-in is rejected by name', async () => {
   const project = tempProject({
     'mockr.json': {
       routes: [
-        { id: 'r_x', method: 'GET', path: '/x', response: { status: 200 }, request: { interceptors: ['@nope'] } },
+        {
+          id: 'r_x',
+          method: 'GET',
+          path: '/x',
+          response: { status: 200 },
+          request: { interceptors: ['@nope'] },
+        },
       ],
     },
   });
@@ -418,7 +441,13 @@ test('an unknown built-in is rejected by name', async () => {
   });
 
   try {
-    assert.match(server.registry.status().errors.map((e) => e.message).join(), /unknown built-in/);
+    assert.match(
+      server.registry
+        .status()
+        .errors.map((e) => e.message)
+        .join(),
+      /unknown built-in/,
+    );
   } finally {
     await server.close();
     project.cleanup();

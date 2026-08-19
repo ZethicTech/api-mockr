@@ -58,7 +58,11 @@ test('rejects names that are paths or carry an extension', async () => {
   const { project, store } = build();
   try {
     for (const bad of ['../evil', 'a/b', '/abs', 'name.js', '.hidden', '']) {
-      await assert.rejects(() => store.write(bad, '1;'), InvalidModuleName, `expected "${bad}" to be rejected`);
+      await assert.rejects(
+        () => store.write(bad, '1;'),
+        InvalidModuleName,
+        `expected "${bad}" to be rejected`,
+      );
     }
   } finally {
     project.cleanup();

@@ -28,14 +28,11 @@ export function createWatcher(opts: WatcherOptions): Promise<FSWatcher> {
   const { paths, store, logger } = opts;
   const debounceMs = opts.debounceMs ?? 100;
 
-  const watcher = chokidar.watch(
-    [paths.configFile, paths.handlersDir, paths.interceptorsDir],
-    {
-      ignoreInitial: true,
-      ignored: (p: string) => p.includes('.tmp') || p.includes('node_modules'),
-      awaitWriteFinish: { stabilityThreshold: 150, pollInterval: 30 },
-    },
-  );
+  const watcher = chokidar.watch([paths.configFile, paths.handlersDir, paths.interceptorsDir], {
+    ignoreInitial: true,
+    ignored: (p: string) => p.includes('.tmp') || p.includes('node_modules'),
+    awaitWriteFinish: { stabilityThreshold: 150, pollInterval: 30 },
+  });
 
   let timer: NodeJS.Timeout | null = null;
   let pending = false;

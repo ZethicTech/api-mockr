@@ -31,8 +31,7 @@ export function Button({ variant = 'ghost', ...props }: ButtonProps) {
   const styles = {
     primary:
       'bg-[var(--color-accent)] text-[var(--color-accent-fg)] font-medium hover:opacity-90 disabled:opacity-40',
-    ghost:
-      'border border-[var(--color-border)] hover:bg-[var(--color-surface-hover)] disabled:opacity-40',
+    ghost: 'border border-[var(--color-border)] hover:bg-[var(--color-surface-hover)] disabled:opacity-40',
     danger:
       'border border-transparent text-[var(--color-danger)] hover:bg-[color-mix(in_oklch,var(--color-danger)_15%,transparent)] disabled:opacity-40',
   }[variant];

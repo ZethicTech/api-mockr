@@ -59,9 +59,7 @@ export class Pipeline {
         try {
           const handler = this.handlers.load(route.handler);
           const result = (await handler(ctx, this.handlers.configFor(route.handler))) as
-            | HandlerResult
-            | undefined
-            | void;
+            HandlerResult | undefined | void;
           ctx.response = normalizeResult(result);
         } catch (err) {
           if (err instanceof ModuleLoadError) {

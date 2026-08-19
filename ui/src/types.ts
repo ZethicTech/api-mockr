@@ -39,5 +39,4 @@ export interface ValidationIssue {
   message: string;
 }
 
-export const isHandlerRoute = (route: Pick<MockRoute, 'handler'>): boolean =>
-  route.handler !== undefined;
+export const isHandlerRoute = (route: Pick<MockRoute, 'handler'>): boolean => route.handler !== undefined;

@@ -172,9 +172,7 @@ export function CodeView({ handlers, interceptors, initial, onChanged }: Props) 
                 <div>
                   <p>{error}</p>
                   {detail && <p class="font-mono">{detail}</p>}
-                  <p class="mt-0.5 text-[var(--color-muted)]">
-                    The previous version is still being served.
-                  </p>
+                  <p class="mt-0.5 text-[var(--color-muted)]">The previous version is still being served.</p>
                 </div>
               </div>
             )}
@@ -187,8 +185,8 @@ export function CodeView({ handlers, interceptors, initial, onChanged }: Props) 
 
             <p class="text-xs text-[var(--color-muted)]">
               CommonJS — use <code class="font-mono">module.exports</code> and{' '}
-              <code class="font-mono">require</code>. Any package you require must be installed in
-              your own project. Saving reloads immediately.
+              <code class="font-mono">require</code>. Any package you require must be installed in your own
+              project. Saving reloads immediately.
             </p>
           </div>
         </section>

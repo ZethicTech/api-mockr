@@ -28,7 +28,11 @@ test('returns a static response', async () => {
   const { project, pipeline } = build({});
   try {
     const out = await pipeline.execute(
-      match({ method: 'GET', path: '/x', response: { status: 201, body: { a: 1 }, headers: { 'x-t': '1' } } }),
+      match({
+        method: 'GET',
+        path: '/x',
+        response: { status: 201, body: { a: 1 }, headers: { 'x-t': '1' } },
+      }),
       request(),
     );
     assert.equal(out.status, 201);
@@ -112,7 +116,12 @@ test('a request interceptor setting ctx.response short-circuits the handler', as
     'handlers/never.js': `module.exports = () => { throw new Error('handler must not run'); };`,
   });
   try {
-    const route = match({ method: 'POST', path: '/x', handler: 'never', request: { interceptors: ['auth'] } });
+    const route = match({
+      method: 'POST',
+      path: '/x',
+      handler: 'never',
+      request: { interceptors: ['auth'] },
+    });
 
     const blocked = await pipeline.execute(route, request());
     assert.equal(blocked.status, 401);
@@ -135,7 +144,12 @@ test('a short-circuit skips the remaining request interceptors', async () => {
   });
   try {
     const out = await pipeline.execute(
-      match({ method: 'GET', path: '/x', response: { status: 200 }, request: { interceptors: ['stop', 'after'] } }),
+      match({
+        method: 'GET',
+        path: '/x',
+        response: { status: 200 },
+        request: { interceptors: ['stop', 'after'] },
+      }),
       request(),
     );
     assert.equal(out.status, 403);
@@ -290,7 +304,12 @@ test('a load failure reports the cause once, without a require stack', async () 
   });
   try {
     const out = await pipeline.execute(
-      match({ method: 'GET', path: '/x', response: { status: 200 }, request: { interceptors: ['needsDep'] } }),
+      match({
+        method: 'GET',
+        path: '/x',
+        response: { status: 200 },
+        request: { interceptors: ['needsDep'] },
+      }),
       request(),
     );
     assert.equal(out.body.interceptor, 'needsDep');

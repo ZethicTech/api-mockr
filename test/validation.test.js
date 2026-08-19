@@ -21,9 +21,9 @@ test('accepts a minimal static route', () => {
 });
 
 test('rejects a route defining both response and handler', () => {
-  const result = check([
-    { id: 'a', method: 'GET', path: '/x', handler: 'h', response: { status: 200 } },
-  ], { 'handlers/h.js': 'module.exports = () => ({});' });
+  const result = check([{ id: 'a', method: 'GET', path: '/x', handler: 'h', response: { status: 200 } }], {
+    'handlers/h.js': 'module.exports = () => ({});',
+  });
   assert.equal(result.ok, false);
   assert.match(messages(result), /cannot define both/);
 });

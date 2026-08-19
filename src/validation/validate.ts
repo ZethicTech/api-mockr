@@ -42,8 +42,7 @@ export function validateConfig(
     return { ok: false, issues };
   }
 
-  const { routes, server, interceptors: interceptorConfig, handlers: handlerConfig } =
-    config as MockrConfig;
+  const { routes, server, interceptors: interceptorConfig, handlers: handlerConfig } = config as MockrConfig;
 
   if (server?.port !== undefined && server.port === server.adminPort) {
     issues.push({ path: '/server', message: '"port" and "adminPort" must differ' });

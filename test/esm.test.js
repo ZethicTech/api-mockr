@@ -51,7 +51,9 @@ test('a scaffolded ESM project loads its own handler', async () => {
     const paths = projectPaths(project.dir);
     scaffold(paths);
     const handler = new HandlerLoader(paths).load('login');
-    const result = await handler({ request: { body: { email: 'a@b.c' }, headers: {}, params: {}, query: {} } });
+    const result = await handler({
+      request: { body: { email: 'a@b.c' }, headers: {}, params: {}, query: {} },
+    });
     assert.equal(result.status, 200);
   } finally {
     project.cleanup();
@@ -59,7 +61,10 @@ test('a scaffolded ESM project loads its own handler', async () => {
 });
 
 test('modules resolve by name across both extensions', () => {
-  const project = tempProject({ 'handlers/a.js': 'module.exports = () => ({});', 'handlers/b.cjs': 'module.exports = () => ({});' });
+  const project = tempProject({
+    'handlers/a.js': 'module.exports = () => ({});',
+    'handlers/b.cjs': 'module.exports = () => ({});',
+  });
   try {
     const dir = path.join(project.dir, 'handlers');
     assert.match(findModuleFile(dir, 'a'), /a\.js$/);
@@ -71,7 +76,10 @@ test('modules resolve by name across both extensions', () => {
 });
 
 test('.cjs wins when both extensions exist', () => {
-  const project = tempProject({ 'handlers/dup.js': 'module.exports = () => ({});', 'handlers/dup.cjs': 'module.exports = () => ({});' });
+  const project = tempProject({
+    'handlers/dup.js': 'module.exports = () => ({});',
+    'handlers/dup.cjs': 'module.exports = () => ({});',
+  });
   try {
     assert.match(findModuleFile(path.join(project.dir, 'handlers'), 'dup'), /dup\.cjs$/);
   } finally {

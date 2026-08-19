@@ -1,5 +1,10 @@
 # mockr
 
+[![CI](https://github.com/ZethicTech/api-mockr/actions/workflows/ci.yml/badge.svg)](https://github.com/ZethicTech/api-mockr/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/mockrjs.svg)](https://www.npmjs.com/package/mockrjs)
+[![node](https://img.shields.io/node/v/mockrjs.svg)](https://nodejs.org)
+[![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 A local mock API server you configure in a browser and extend with plain
 JavaScript. No database, no account, no cloud.
 
@@ -258,13 +263,13 @@ Mockr installs nothing on your behalf and bundles nothing.
 ### What a handler receives
 
 ```js
-ctx.request.method    // "POST"
-ctx.request.path      // "/users/42"
-ctx.request.params    // { id: "42" }        from /users/:id
-ctx.request.query     // { page: "2" }       from ?page=2
-ctx.request.headers   // lowercased keys
-ctx.request.body      // parsed by content-type
-ctx.route.id          // the route that matched
+ctx.request.method; // "POST"
+ctx.request.path; // "/users/42"
+ctx.request.params; // { id: "42" }        from /users/:id
+ctx.request.query; // { page: "2" }       from ?page=2
+ctx.request.headers; // lowercased keys
+ctx.request.body; // parsed by content-type
+ctx.route.id; // the route that matched
 ```
 
 ### What a handler returns
@@ -311,11 +316,14 @@ rather than written**:
   "routes": [
     { "method": "POST", "path": "/login", "handler": "@jwt.sign" },
 
-    { "method": "GET", "path": "/me", "handler": "whoami",
-      "request": { "interceptors": ["@jwt"] } },
+    { "method": "GET", "path": "/me", "handler": "whoami", "request": { "interceptors": ["@jwt"] } },
 
-    { "method": "GET", "path": "/paid", "response": { "status": 200, "body": { "ok": true } },
-      "request": { "interceptors": ["@apiKey"] } }
+    {
+      "method": "GET",
+      "path": "/paid",
+      "response": { "status": 200, "body": { "ok": true } },
+      "request": { "interceptors": ["@apiKey"] }
+    }
   ]
 }
 ```
@@ -345,24 +353,24 @@ reads them:
 module.exports = (ctx) => ({ body: { sub: ctx.request.user.sub } });
 ```
 
-| Built-in | |
-|---|---|
-| `@jwt` | Verify a bearer token, attach claims to `ctx.request.user` |
-| `@apiKey` | Require a matching key in a header or query parameter |
+| Built-in    |                                                             |
+| ----------- | ----------------------------------------------------------- |
+| `@jwt`      | Verify a bearer token, attach claims to `ctx.request.user`  |
+| `@apiKey`   | Require a matching key in a header or query parameter       |
 | `@jwt.sign` | Issue a token from the request body (a mock login endpoint) |
 
 ### @jwt options
 
-| | default | |
-|---|---|---|
-| `secret` | required | HMAC secret |
-| `algorithms` | `["HS256"]` | allowed algorithms — HS256, HS384, HS512 |
-| `header` | `authorization` | where to read the token |
-| `scheme` | `Bearer` | prefix to strip; `""` for a bare token |
-| `attachTo` | `user` | property on `ctx.request` to hold the claims |
-| `optional` | `false` | allow anonymous requests through |
-| `issuer` / `audience` | | checked when set |
-| `clockTolerance` | `0` | seconds of leeway on `exp` and `nbf` |
+|                       | default         |                                              |
+| --------------------- | --------------- | -------------------------------------------- |
+| `secret`              | required        | HMAC secret                                  |
+| `algorithms`          | `["HS256"]`     | allowed algorithms — HS256, HS384, HS512     |
+| `header`              | `authorization` | where to read the token                      |
+| `scheme`              | `Bearer`        | prefix to strip; `""` for a bare token       |
+| `attachTo`            | `user`          | property on `ctx.request` to hold the claims |
+| `optional`            | `false`         | allow anonymous requests through             |
+| `issuer` / `audience` |                 | checked when set                             |
+| `clockTolerance`      | `0`             | seconds of leeway on `exp` and `nbf`         |
 
 Verification is HMAC only, done with `node:crypto` rather than a JWT
 dependency. Unsigned tokens (`alg: none`) and algorithms outside the allowed
@@ -548,14 +556,14 @@ mockr                    # start, scaffolding first if needed
 mockr init               # scaffold only
 ```
 
-| Flag | Default | |
-|---|---|---|
-| `-p, --port` | `4000` | mock server port |
-| `--admin-port` | `4100` | UI and API port |
-| `--host` | `127.0.0.1` | bind address |
-| `-d, --dir` | cwd | project directory |
-| `--cors` / `--no-cors` | on | permissive CORS |
-| `-q, --quiet` | | silence the request log |
+| Flag                   | Default     |                         |
+| ---------------------- | ----------- | ----------------------- |
+| `-p, --port`           | `4000`      | mock server port        |
+| `--admin-port`         | `4100`      | UI and API port         |
+| `--host`               | `127.0.0.1` | bind address            |
+| `-d, --dir`            | cwd         | project directory       |
+| `--cors` / `--no-cors` | on          | permissive CORS         |
+| `-q, --quiet`          |             | silence the request log |
 
 ---
 
@@ -671,18 +679,34 @@ Two ports, the same two the product uses — the UI is served by the admin
 server, in development exactly as in production. Editing anything under `ui/`
 rebuilds in about 200ms; refresh to see it.
 
-| | |
-|---|---|
-| `npm run dev` | server plus UI rebuild, against `demo/` |
-| `npm run build` | server to `dist/`, UI to `dist/ui/` |
-| `npm test` | unit and end-to-end tests, including reload |
-| `npm run typecheck` | both TypeScript projects |
+|                     |                                             |
+| ------------------- | ------------------------------------------- |
+| `npm run dev`       | server plus UI rebuild, against `demo/`     |
+| `npm run build`     | server to `dist/`, UI to `dist/ui/`         |
+| `npm test`          | unit and end-to-end tests, including reload |
+| `npm run typecheck` | both TypeScript projects                    |
 
 `demo/` is gitignored and scaffolds itself on first run.
 
 The architecture and the reasoning behind each decision are in
 [`docs/spec.md`](docs/spec.md).
 
+## Contributing
+
+Contributions are welcome — bug fixes, tests, documentation and platform
+fixes especially. [CONTRIBUTING.md](CONTRIBUTING.md) covers the setup, how the
+code is laid out, and the few places where a change is most likely to break
+something quietly.
+
+Larger changes are worth an issue first, since Mockr keeps its scope
+deliberately narrow.
+
+- [Contributing guide](CONTRIBUTING.md)
+- [Code of conduct](CODE_OF_CONDUCT.md)
+- [Security policy](SECURITY.md) — please report vulnerabilities privately
+- [Changelog](CHANGELOG.md)
+- [Architecture and decisions](docs/spec.md)
+
 ## License
 
-MIT
+[MIT](LICENSE)

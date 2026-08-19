@@ -37,15 +37,15 @@ const TOKEN_CLASS: Record<TokenKind, string> = {
   punct: 'text-[var(--color-muted)]',
 };
 
-const escapeHtml = (s: string) =>
-  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const escapeHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 /**
  * Minimal JSON tokenizer for the highlight overlay.
  * JSON is a small enough grammar that this beats pulling in an editor library.
  */
 function highlight(source: string): string {
-  const pattern = /("(?:\\.|[^"\\])*")(\s*:)?|(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)|\b(true|false|null)\b|([{}[\],:])/g;
+  const pattern =
+    /("(?:\\.|[^"\\])*")(\s*:)?|(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)|\b(true|false|null)\b|([{}[\],:])/g;
 
   let out = '';
   let last = 0;

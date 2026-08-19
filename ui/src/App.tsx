@@ -106,10 +106,7 @@ export function App() {
     if (!draft) return false;
     const path = draft.path.trim().replace(/\/+$/, '') || '/';
     return routes.some(
-      (r) =>
-        r.id !== selectedId &&
-        r.method === draft.method &&
-        (r.path.replace(/\/+$/, '') || '/') === path,
+      (r) => r.id !== selectedId && r.method === draft.method && (r.path.replace(/\/+$/, '') || '/') === path,
     );
   }, [draft, routes, selectedId]);
 
@@ -237,45 +234,40 @@ export function App() {
       )}
 
       {view === 'code' ? (
-        <CodeView
-          handlers={handlers}
-          interceptors={interceptors}
-          initial={openFile}
-          onChanged={refresh}
-        />
+        <CodeView handlers={handlers} interceptors={interceptors} initial={openFile} onChanged={refresh} />
       ) : (
-      <main class="flex min-h-0 flex-1">
-        <RouteList
-          routes={routes}
-          selectedId={selectedId}
-          dirty={dirty}
-          onSelect={select}
-          onCreate={createNew}
-        />
-
-        {draft ? (
-          <RouteEditor
-            draft={draft}
-            isNew={isNew}
-            saving={saving}
-            duplicate={duplicate}
-            issues={issues}
-            error={error}
-            handlers={handlers}
-            interceptors={interceptors}
-            handlerBuiltins={handlerBuiltins}
-            interceptorBuiltins={interceptorBuiltins}
-            onChange={setDraft}
-            onSave={save}
-            onDelete={remove}
-            onEditModule={editModule}
+        <main class="flex min-h-0 flex-1">
+          <RouteList
+            routes={routes}
+            selectedId={selectedId}
+            dirty={dirty}
+            onSelect={select}
+            onCreate={createNew}
           />
-        ) : (
-          <section class="flex flex-1 items-center justify-center text-sm text-[var(--color-muted)]">
-            {booted ? 'Select a route, or create one.' : 'Loading…'}
-          </section>
-        )}
-      </main>
+
+          {draft ? (
+            <RouteEditor
+              draft={draft}
+              isNew={isNew}
+              saving={saving}
+              duplicate={duplicate}
+              issues={issues}
+              error={error}
+              handlers={handlers}
+              interceptors={interceptors}
+              handlerBuiltins={handlerBuiltins}
+              interceptorBuiltins={interceptorBuiltins}
+              onChange={setDraft}
+              onSave={save}
+              onDelete={remove}
+              onEditModule={editModule}
+            />
+          ) : (
+            <section class="flex flex-1 items-center justify-center text-sm text-[var(--color-muted)]">
+              {booted ? 'Select a route, or create one.' : 'Loading…'}
+            </section>
+          )}
+        </main>
       )}
     </div>
   );

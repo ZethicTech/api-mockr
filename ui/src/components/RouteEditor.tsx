@@ -55,9 +55,7 @@ export function draftToRoute(draft: Draft): { route: Omit<MockRoute, 'id'> } | {
   const base = {
     method: draft.method as MockRoute['method'],
     path,
-    ...(draft.requestInterceptors.length > 0
-      ? { request: { interceptors: draft.requestInterceptors } }
-      : {}),
+    ...(draft.requestInterceptors.length > 0 ? { request: { interceptors: draft.requestInterceptors } } : {}),
   };
 
   if (draft.mode === 'handler') {
@@ -90,9 +88,7 @@ export function draftToRoute(draft: Draft): { route: Omit<MockRoute, 'id'> } | {
           ? { headers: headers.value as Record<string, string> }
           : {}),
         ...(body.value === null ? {} : { body: body.value }),
-        ...(draft.responseInterceptors.length > 0
-          ? { interceptors: draft.responseInterceptors }
-          : {}),
+        ...(draft.responseInterceptors.length > 0 ? { interceptors: draft.responseInterceptors } : {}),
       },
     },
   };
@@ -180,7 +176,10 @@ export function RouteEditor(props: Props) {
         <div class="grid grid-cols-[7rem_1fr] gap-3">
           <div>
             <Label>Method</Label>
-            <Select value={draft.method} onChange={(e) => set('method', (e.target as HTMLSelectElement).value)}>
+            <Select
+              value={draft.method}
+              onChange={(e) => set('method', (e.target as HTMLSelectElement).value)}
+            >
               {HTTP_METHODS.map((m) => (
                 <option key={m} value={m}>
                   {m}
@@ -237,7 +236,10 @@ export function RouteEditor(props: Props) {
               )}
             </div>
             {handlers.length > 0 || props.handlerBuiltins.length > 0 ? (
-              <Select value={draft.handler} onChange={(e) => set('handler', (e.target as HTMLSelectElement).value)}>
+              <Select
+                value={draft.handler}
+                onChange={(e) => set('handler', (e.target as HTMLSelectElement).value)}
+              >
                 <option value="">Select a handler…</option>
                 {handlers.length > 0 && (
                   <optgroup label="Your handlers">
