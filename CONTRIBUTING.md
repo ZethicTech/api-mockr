@@ -130,6 +130,48 @@ TypeScript is strict. Prefer making an invalid state unrepresentable —
 `ctx.response` is optional because it genuinely does not exist during the
 request phase, and the type says so rather than lying.
 
+## Sending a change
+
+You do not need push access. The flow is the usual one:
+
+```bash
+# 1. Fork the repository on GitHub, then clone your fork
+git clone git@github.com:YOUR-USERNAME/api-mockr.git
+cd api-mockr
+
+# 2. Point at the original so you can stay up to date
+git remote add upstream git@github.com:ZethicTech/api-mockr.git
+
+# 3. Branch
+git checkout -b fix/reload-on-windows
+
+# 4. Make the change, then check it
+npm run format && npm run typecheck && npm test
+
+# 5. Push to your fork and open a pull request
+git push origin fix/reload-on-windows
+```
+
+GitHub will offer to open the pull request once you push. Pick a branch name
+that says what the change is — `fix/`, `feat/`, `docs/` prefixes are fine but
+not required.
+
+To pick up changes made after you forked:
+
+```bash
+git fetch upstream
+git rebase upstream/main
+```
+
+Pull requests are squashed on merge, so a messy branch history is not a
+problem — the squash message is taken from the pull request title and body,
+which is what ends up in the log. Write those the way you would write a commit
+message.
+
+Maintainers cannot push to your branch unless you tick _Allow edits by
+maintainers_ when opening the pull request. Leaving it on usually means small
+fixes get made for you rather than sent back in review.
+
 ## Commits and pull requests
 
 Commit messages follow `type(scope): summary` — `feat`, `fix`, `docs`,
