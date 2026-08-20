@@ -3,7 +3,7 @@ name: Release
 # Publishes to npm when a version tag is pushed.
 #
 # There is no npm token. npm trusts this workflow directly through OIDC —
-# configured once at npmjs.com/package/mockrjs/access, pinned to this
+# configured once at npmjs.com/package/@zethictech/mockr/access, pinned to this
 # repository and this filename. Renaming this file breaks publishing until
 # the trusted publisher is updated to match.
 

@@ -1,5 +1,5 @@
 {
-  "name": "mockrjs",
+  "name": "@zethictech/mockr",
   "version": "0.1.0",
   "description": "Lightweight local mock API server with a web UI, JavaScript handlers and hot reload",
   "license": "MIT",
@@ -59,5 +59,8 @@
   "homepage": "https://github.com/ZethicTech/api-mockr#readme",
   "bugs": {
     "url": "https://github.com/ZethicTech/api-mockr/issues"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

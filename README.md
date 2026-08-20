@@ -1,7 +1,7 @@
 # mockr
 
-[![npm](https://img.shields.io/npm/v/mockrjs.svg)](https://www.npmjs.com/package/mockrjs)
-[![node](https://img.shields.io/node/v/mockrjs.svg)](https://nodejs.org)
+[![npm](https://img.shields.io/npm/v/%40zethictech%2Fmockr.svg)](https://www.npmjs.com/package/@zethictech/mockr)
+[![node](https://img.shields.io/node/v/%40zethictech%2Fmockr.svg)](https://nodejs.org)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 A local mock API server you configure in a browser and extend with plain
@@ -9,7 +9,7 @@ JavaScript. No database, no account, no cloud.
 
 ```bash
 cd your-project
-npx mockrjs
+npx @zethictech/mockr
 ```
 
 That scaffolds a project, starts a mock server on `:4000` and opens a UI on
@@ -47,7 +47,7 @@ Add it to your dev scripts so it comes up with everything else:
 
 ```json
 {
-  "devDependencies": { "mockrjs": "^0.1.0" },
+  "devDependencies": { "@zethictech/mockr": "^0.1.0" },
   "scripts": {
     "mock": "mockr",
     "dev": "npm run mock & vite"
@@ -55,9 +55,9 @@ Add it to your dev scripts so it comes up with everything else:
 }
 ```
 
-Or run it on demand with `npx mockrjs`. No install required.
+Or run it on demand with `npx @zethictech/mockr`. No install required.
 
-> The package is `mockrjs`; the command it installs is `mockr`.
+> The package is `@zethictech/mockr`; the command it installs is `mockr`.
 
 ### 2. Point your app at it
 
@@ -249,7 +249,7 @@ module.exports = async function (ctx) {
 Environment variables work as usual, so secrets stay out of the repo:
 
 ```bash
-MOCK_JWT_SECRET=something-else npx mockrjs
+MOCK_JWT_SECRET=something-else npx @zethictech/mockr
 ```
 
 **If you forget to install the package**, the route returns an error naming the
@@ -328,7 +328,7 @@ rather than written**:
 ```
 
 ```bash
-MOCK_JWT_SECRET=dev-secret npx mockrjs
+MOCK_JWT_SECRET=dev-secret npx @zethictech/mockr
 ```
 
 `${VAR}` is expanded from the environment, so a secret is named in the file
@@ -510,7 +510,7 @@ Both ports are configurable, either per run or per project.
 ### On the command line
 
 ```bash
-npx mockrjs --port 4000 --admin-port 4100
+npx @zethictech/mockr --port 4000 --admin-port 4100
 ```
 
 ### In mockr.json
@@ -534,7 +534,7 @@ So the whole team gets the same ports without typing flags:
 this keeps the file's `adminPort` and overrides only the mock port:
 
 ```bash
-npx mockrjs --port 6001
+npx @zethictech/mockr --port 6001
 ```
 
 ```

@@ -205,7 +205,7 @@ Two things that will break it:
 
 - **Renaming the workflow file.** The trusted publisher on npm is pinned to
   this repository _and_ this filename. Rename it and publishing fails until
-  the configuration at `npmjs.com/package/mockrjs/access` is updated to match.
+  the configuration at `npmjs.com/package/@zethictech/mockr/access` is updated to match.
 - **A tag that does not match the version.** The workflow fails rather than
   publishing something surprising.
 
