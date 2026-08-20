@@ -21,6 +21,8 @@ export interface StartOptions {
   host: string;
   cors: boolean;
   quiet: boolean;
+  /** Suppress warnings and errors too. Used by tests. */
+  silent?: boolean;
   watch?: boolean;
   uiDir?: string | null;
 }
@@ -43,7 +45,7 @@ export interface RunningMockr {
 
 export async function start(opts: StartOptions): Promise<RunningMockr> {
   const paths = projectPaths(opts.dir);
-  const logger = new Logger({ quiet: opts.quiet });
+  const logger = new Logger({ quiet: opts.quiet, silent: opts.silent });
 
   const store = new JsonFileStore(paths);
   if (!store.exists()) {

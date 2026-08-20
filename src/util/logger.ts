@@ -7,16 +7,27 @@ const BLUE = '\x1b[34m';
 const CYAN = '\x1b[36m';
 
 export interface LoggerOptions {
+  /** Suppress the request log. Warnings and errors still print. */
   quiet?: boolean;
+  /**
+   * Suppress everything, including warnings and errors.
+   *
+   * For tests that deliberately break things: their expected output would
+   * otherwise bury a real failure in the same stream. Not exposed as a flag,
+   * because a user silencing errors is a user who cannot see what went wrong.
+   */
+  silent?: boolean;
   color?: boolean;
 }
 
 export class Logger {
   private quiet: boolean;
+  private silent: boolean;
   private color: boolean;
 
   constructor(opts: LoggerOptions = {}) {
-    this.quiet = opts.quiet ?? false;
+    this.silent = opts.silent ?? false;
+    this.quiet = this.silent || (opts.quiet ?? false);
     this.color = opts.color ?? process.stdout.isTTY === true;
   }
 
@@ -44,14 +55,17 @@ export class Logger {
   }
 
   ready(label: string, url: string): void {
+    if (this.silent) return;
     console.log(`  ${this.paint(GREEN, '●')} ${label.padEnd(6)} ${this.paint(BLUE, url)}`);
   }
 
   warn(message: string): void {
+    if (this.silent) return;
     console.warn(this.paint(YELLOW, `! ${message}`));
   }
 
   error(message: string, err?: Error): void {
+    if (this.silent) return;
     console.error(this.paint(RED, `✗ ${message}`));
     if (err?.stack) console.error(this.paint(DIM, err.stack));
   }

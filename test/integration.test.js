@@ -22,6 +22,7 @@ async function withServer(run, files = {}) {
     host: '127.0.0.1',
     cors: true,
     quiet: true,
+    silent: true,
     uiDir: null,
   });
 
@@ -350,6 +351,7 @@ test('built-in auth works end to end from config', async () => {
     host: '127.0.0.1',
     cors: true,
     quiet: true,
+    silent: true,
     uiDir: null,
   });
   const mock = (p, init) => fetch(`http://127.0.0.1:${server.mockPort}${p}`, init);
@@ -399,6 +401,7 @@ test('a built-in missing its configuration is reported, not left to fail per req
     host: '127.0.0.1',
     cors: true,
     quiet: true,
+    silent: true,
     uiDir: null,
   });
 
@@ -437,6 +440,7 @@ test('an unknown built-in is rejected by name', async () => {
     host: '127.0.0.1',
     cors: true,
     quiet: true,
+    silent: true,
     uiDir: null,
   });
 
@@ -479,6 +483,7 @@ test('user interceptors receive their configured settings', async () => {
     host: '127.0.0.1',
     cors: true,
     quiet: true,
+    silent: true,
     uiDir: null,
   });
 
