@@ -1,0 +1,33 @@
+name: Feature request
+description: Suggest something Mockr should do
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Mockr deliberately stays small. Some things are non-goals rather than
+        missing work — regex routes, request recording, GraphQL, a database,
+        multi-user support, and a passthrough proxy are listed in the README.
+
+        A suggestion in that list is still worth raising if you think the
+        reasoning is wrong; say why rather than just what.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do
+      description: The situation, not the solution. What is awkward today?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you have in mind
+      description: Roughly how it might work, and what the config would look like.
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What you tried instead
+      description: A handler, an interceptor, or another tool — and where it fell short.

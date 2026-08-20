@@ -1,0 +1,85 @@
+name: Bug report
+description: Something behaves differently than documented
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this.
+
+        If the problem involves a handler or interceptor, the most useful thing
+        you can include is the smallest `mockr.json` and module that reproduce it.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you saw, and what you expected instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction
+      description: The config, the request, and the response.
+      placeholder: |
+        mockr.json:
+        {
+          "routes": [{ "method": "GET", "path": "/users", "response": { "status": 200, "body": {} } }]
+        }
+
+        Request:
+        curl -i localhost:4000/users
+
+        Response:
+        HTTP/1.1 404 Not Found
+      render: text
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Mockr version
+      placeholder: 0.1.0
+    validations:
+      required: true
+
+  - type: input
+    id: node
+    attributes:
+      label: Node version
+      description: Output of `node -v`
+      placeholder: v22.11.0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options: [macOS, Linux, Windows, Other]
+    validations:
+      required: true
+
+  - type: dropdown
+    id: module-system
+    attributes:
+      label: Is your project ESM?
+      description: >-
+        Whether your package.json sets the module type. Handler loading differs
+        between the two.
+      options:
+        - 'No — CommonJS'
+        - 'Yes — type: module'
+        - 'Not sure'
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Terminal output
+      description: Anything Mockr printed, including reload warnings.
+      render: text

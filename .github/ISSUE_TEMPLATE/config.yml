@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Question or usage help
+    url: https://github.com/ZethicTech/api-mockr/discussions
+    about: Ask how to do something, or share what you built.
+  - name: Security vulnerability
+    url: https://github.com/ZethicTech/api-mockr/security/advisories/new
+    about: Report privately rather than in a public issue.
