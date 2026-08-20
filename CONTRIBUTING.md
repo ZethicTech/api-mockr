@@ -32,14 +32,16 @@ server needs a restart, since it is compiled TypeScript.
 | `npm run format`    | Prettier over the repository            |
 | `npm run build`     | server to `dist/`, UI to `dist/ui/`     |
 
-Before opening a pull request:
+Before opening a pull request, run all three:
 
 ```bash
 npm run format && npm run typecheck && npm test
 ```
 
-CI runs the same three on Node 20, 22 and 24, and on macOS and Windows for
-Node 22.
+There is no CI yet, so this is the only thing standing between a change and
+`main` — please actually run it. Mockr supports Node 20 and above; if your
+change touches file watching, it is worth a thought for Windows and macOS,
+which handle it differently.
 
 ## How the code is laid out
 

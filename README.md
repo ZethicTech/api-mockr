@@ -1,6 +1,5 @@
 # mockr
 
-[![CI](https://github.com/ZethicTech/api-mockr/actions/workflows/ci.yml/badge.svg)](https://github.com/ZethicTech/api-mockr/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/mockrjs.svg)](https://www.npmjs.com/package/mockrjs)
 [![node](https://img.shields.io/node/v/mockrjs.svg)](https://nodejs.org)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
