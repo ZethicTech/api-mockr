@@ -182,6 +182,35 @@ in a year, wondering what this was for.
 Keep a pull request to one concern. A formatting sweep mixed into a bug fix
 makes the fix impossible to review, and impossible to revert alone later.
 
+## Releasing
+
+For maintainers.
+
+The package is published from GitHub Actions, not from a laptop. npm trusts
+the workflow through OpenID Connect, so there is no npm token stored anywhere
+— not in the repository, not in a secret, not on anyone's machine. A leaked
+token cannot publish Mockr because there is no token to leak.
+
+```bash
+npm version patch          # or minor / major — bumps, commits, tags
+git push --follow-tags
+```
+
+Pushing the tag runs `.github/workflows/release.yml`, which checks the tag
+matches `package.json`, runs the typecheck and tests, and publishes with
+provenance attached. The provenance is what lets anyone verify the published
+tarball was built from this repository at that commit.
+
+Two things that will break it:
+
+- **Renaming the workflow file.** The trusted publisher on npm is pinned to
+  this repository _and_ this filename. Rename it and publishing fails until
+  the configuration at `npmjs.com/package/mockrjs/access` is updated to match.
+- **A tag that does not match the version.** The workflow fails rather than
+  publishing something surprising.
+
+Update `CHANGELOG.md` before tagging. The release notes come from it.
+
 ## Scope
 
 Mockr stays small on purpose. The README lists what is deliberately not

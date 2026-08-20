@@ -1,0 +1,58 @@
+name: Release
+
+# Publishes to npm when a version tag is pushed.
+#
+# There is no npm token. npm trusts this workflow directly through OIDC —
+# configured once at npmjs.com/package/mockrjs/access, pinned to this
+# repository and this filename. Renaming this file breaks publishing until
+# the trusted publisher is updated to match.
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write # lets GitHub mint the OIDC token npm verifies
+
+jobs:
+  publish:
+    name: publish to npm
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          registry-url: https://registry.npmjs.org
+
+      # Trusted publishing needs npm 11.5.1 or later. Node 24 ships something
+      # recent, but the bundled version moves, so pin the floor explicitly.
+      - name: Ensure npm supports trusted publishing
+        run: |
+          npm install -g npm@latest
+          npm --version
+
+      - run: npm ci
+
+      - name: Check the tag matches the version in package.json
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          PKG="$(node -p "require('./package.json').version")"
+          if [ "$TAG" != "$PKG" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match package.json version $PKG" >&2
+            exit 1
+          fi
+          echo "Publishing $PKG"
+
+      - run: npm run typecheck
+      - run: npm test
+
+      # prepublishOnly builds and tests again, so a stale dist cannot ship.
+      # --provenance is passed explicitly: it is meant to be implied by trusted
+      # publishing, but being explicit costs nothing and fails loudly if the
+      # OIDC token is missing rather than publishing without attestation.
+      - run: npm publish --provenance --access public
